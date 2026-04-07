@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import re
 import io
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -10,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Custom CSS (Ultra-Refined) ───────────────────────────────────────────────
+# ── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;800&display=swap');
@@ -24,9 +23,15 @@ html, body, [class*="css"] { font-family: 'Syne', sans-serif; font-size: 13px; }
     border-bottom: 1px solid #d0d7de;
     padding: 10px 20px;
     margin-bottom: 15px;
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.header-mini h1 { font-size: 1.4rem; margin: 0; color: #1a7f37; }
+.header-mini h1 {
+    font-size: 1.4rem;
+    margin: 0;
+    color: #1a7f37;
+}
 
 /* Preview Price Card */
 .preview-box {
@@ -35,78 +40,96 @@ html, body, [class*="css"] { font-family: 'Syne', sans-serif; font-size: 13px; }
     border-radius: 8px;
     padding: 5px 12px;
     text-align: center;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
-.preview-label { font-size: 0.6rem; color: #1a7f37; text-transform: uppercase; font-weight: bold; }
-.preview-value { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #116329; }
+.preview-label {
+    font-size: 0.6rem;
+    color: #1a7f37;
+    text-transform: uppercase;
+    font-weight: bold;
+    line-height: 1;
+}
+.preview-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #116329;
+    line-height: 1.2;
+    margin-top: 4px;
+}
 
-/* Item Row - Tarjeta Principal */
-.sel-item {
+/* Detalle */
+.detail-title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #57606a;
+    margin-bottom: 12px;
+}
+
+.detail-row-wrap {
     background: #ffffff;
     border: 1px solid #d0d7de;
-    border-left: 4px solid #2ea843;
-    border-radius: 6px;
-    padding: 12px 18px;
-    display: flex; align-items: center;
-    font-size: 0.9rem;
-    width: 100%;
-    min-height: 52px;
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.price-tag { font-family: 'DM Mono', monospace; font-weight: 700; color: #1a7f37; font-size: 1.1rem; }
 
-/* --- FIX DE MOVIMIENTO (FLECHAS PEQUEÑAS Y UNIDAS) --- */
-/* Eliminamos el gap de Streamlit en la columna de movimiento */
-[data-testid="column"]:first-child div[data-testid="stVerticalBlock"] {
+.sel-item {
+    background: transparent;
+    border: none;
+    border-left: 4px solid #2ea843;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    width: 100%;
+    min-height: 54px;
+}
+
+.price-tag {
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    color: #1a7f37;
+    font-size: 1.05rem;
+}
+
+/* Botones del detalle */
+div[data-testid="stButton"] > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+}
+
+/* Reduce el espacio vertical entre botones apilados en la columna de movimiento */
+div[data-testid="column"] div[data-testid="stVerticalBlock"] {
     gap: 0rem !important;
 }
 
-/* Estilizamos los botones de flecha ▲ ▼ */
-div.stButton > button:has(div:contains("▲")), 
-div.stButton > button:has(div:contains("▼")) {
-    width: 32px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-    background: #ffffff !important;
-    border: 1px solid #d0d7de !important;
-    color: #57606a !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: 10px !important;
-    transition: all 0.2s;
+/* Mueve un poco el botón X para que quede centrado visualmente */
+.delete-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
-/* Unimos visualmente los botones */
-div.stButton > button:has(div:contains("▲")) {
-    border-radius: 6px 6px 0 0 !important;
+/* General */
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
-div.stButton > button:has(div:contains("▼")) {
-    border-radius: 0 0 6px 6px !important;
-    border-top: none !important;
-}
-
-div.stButton > button:has(div:contains("▲")):hover, 
-div.stButton > button:has(div:contains("▼")):hover {
-    background: #f0fff4 !important;
-    color: #1a7f37 !important;
-    border-color: #2ea843 !important;
-    z-index: 10;
-}
-
-/* Botón Eliminar (X) más elegante */
-div.stButton > button:has(div:contains("✕")) {
-    background: transparent !important;
-    border: 1px solid #d0d7de !important;
-    color: #cf222e !important;
-    border-radius: 6px !important;
-    width: 32px !important;
-    height: 32px !important;
-}
-div.stButton > button:has(div:contains("✕")):hover {
-    background: #ffebe9 !important;
-    border-color: #cf222e !important;
-}
-
-.block-container { padding-top: 1rem; padding-bottom: 1rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -118,11 +141,15 @@ def load_data_auto():
     try:
         data = pd.read_csv(url)
         if 'Precio' in data.columns:
-            data['Precio'] = data['Precio'].astype(str).str.replace(r'[\$\.\,\s]', '', regex=True)
+            data['Precio'] = (
+                data['Precio']
+                .astype(str)
+                .str.replace(r'[\$\.\,\s]', '', regex=True)
+            )
             data['Precio'] = pd.to_numeric(data['Precio'], errors='coerce').fillna(0).astype(int)
         return data
     except:
-        return pd.DataFrame(columns=["Categoría","Producto","Proveedor","Precio"])
+        return pd.DataFrame(columns=["Categoría", "Producto", "Proveedor", "Precio"])
 
 df = load_data_auto()
 
@@ -132,12 +159,19 @@ if "cotizacion" not in st.session_state:
 def fmt(price: int) -> str:
     return f"${price:,.0f}".replace(",", ".")
 
-# ── Movimiento ────────────────────────────────────────────────────────────────
+# ── Acciones ─────────────────────────────────────────────────────────────────
 def move_item(index, direction):
+    cot = st.session_state.cotizacion
     new_index = index + direction
-    if 0 <= new_index < len(st.session_state.cotizacion):
-        st.session_state.cotizacion[index], st.session_state.cotizacion[new_index] = \
-            st.session_state.cotizacion[new_index], st.session_state.cotizacion[index]
+    if 0 <= new_index < len(cot):
+        cot[index], cot[new_index] = cot[new_index], cot[index]
+        st.rerun()
+
+def delete_item(index):
+    cot = st.session_state.cotizacion
+    if 0 <= index < len(cot):
+        cot.pop(index)
+        st.rerun()
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -150,23 +184,23 @@ st.markdown(f"""
 # ── Selector Horizontal ───────────────────────────────────────────────────────
 if not df.empty:
     c1, c2, c3, c4, c5 = st.columns([1.5, 2.5, 1.5, 1.2, 2.5])
-    
+
     with c1:
-        cats = sorted(df["Categoría"].unique().tolist())
+        cats = sorted(df["Categoría"].dropna().unique().tolist())
         cat_sel = st.selectbox("Categoría", cats, label_visibility="collapsed")
-    
+
     mask_cat = df[df["Categoría"] == cat_sel]
-    
+
     with c2:
-        prods = sorted(mask_cat["Producto"].unique().tolist())
+        prods = sorted(mask_cat["Producto"].dropna().unique().tolist())
         prod_sel = st.selectbox("Producto", prods, label_visibility="collapsed")
-        
+
     mask_prod = mask_cat[mask_cat["Producto"] == prod_sel]
-    
+
     with c3:
-        provs = mask_prod["Proveedor"].unique().tolist()
+        provs = mask_prod["Proveedor"].dropna().unique().tolist()
         prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed")
-            
+
     final_row = mask_prod[mask_prod["Proveedor"] == prov_sel].iloc[0]
     precio_actual = int(final_row["Precio"])
 
@@ -177,74 +211,84 @@ if not df.empty:
             <div class="preview-value">{fmt(precio_actual)}</div>
         </div>
         """, unsafe_allow_html=True)
-        
+
     with c5:
         b1, b2, b3 = st.columns(3)
+
         with b1:
             if st.button("➕ Añadir", use_container_width=True):
                 st.session_state.cotizacion.append({
-                    "Categoría": final_row["Categoría"], "Producto": final_row["Producto"],
-                    "Proveedor": final_row["Proveedor"], "Precio": precio_actual
+                    "Categoría": final_row["Categoría"],
+                    "Producto": final_row["Producto"],
+                    "Proveedor": final_row["Proveedor"],
+                    "Precio": precio_actual
                 })
+                st.rerun()
+
         with b2:
             cheap = mask_cat.loc[mask_cat["Precio"].idxmin()]
             if st.button("⬇️ Barato", use_container_width=True):
                 st.session_state.cotizacion.append({
-                    "Categoría": cheap["Categoría"], "Producto": cheap["Producto"],
-                    "Proveedor": cheap["Proveedor"], "Precio": int(cheap["Precio"])
+                    "Categoría": cheap["Categoría"],
+                    "Producto": cheap["Producto"],
+                    "Proveedor": cheap["Proveedor"],
+                    "Precio": int(cheap["Precio"])
                 })
+                st.rerun()
+
         with b3:
             exp = mask_cat.loc[mask_cat["Precio"].idxmax()]
             if st.button("⬆️ Caro", use_container_width=True):
                 st.session_state.cotizacion.append({
-                    "Categoría": exp["Categoría"], "Producto": exp["Producto"],
-                    "Proveedor": exp["Proveedor"], "Precio": int(exp["Precio"])
+                    "Categoría": exp["Categoría"],
+                    "Producto": exp["Producto"],
+                    "Proveedor": exp["Proveedor"],
+                    "Precio": int(exp["Precio"])
                 })
+                st.rerun()
 
 # ── Detalle ───────────────────────────────────────────────────────────────────
 st.write("")
 left, right = st.columns([3, 1.2])
 
 with left:
-    st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:#57606a; margin-bottom:12px;'>DETALLE DE COTIZACIÓN</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='detail-title'>DETALLE DE COTIZACIÓN</div>",
+        unsafe_allow_html=True
+    )
+
     cot = st.session_state.cotizacion
-    
+
     if not cot:
         st.info("La lista está vacía.")
     else:
         for idx, item in enumerate(cot):
-            # Layout: [Control Mover, Tarjeta, Borrar]
-            col_move, col_info, col_del = st.columns([0.2, 10, 0.4])
-            
-            with col_move:
-                # Botones ▲ ▼ pegados sin gap
-                if st.button("▲", key=f"up_{idx}"):
-                    move_item(idx, -1)
-                    st.rerun()
-                if st.button("▼", key=f"down_{idx}"):
-                    move_item(idx, 1)
-                    st.rerun()
+            row = st.columns([0.55, 9.8, 0.65], gap="small", vertical_alignment="center")
 
-            with col_info:
+            with row[0]:
+                st.button("▲", key=f"up_{idx}", use_container_width=True, on_click=move_item, args=(idx, -1))
+                st.button("▼", key=f"down_{idx}", use_container_width=True, on_click=move_item, args=(idx, 1))
+
+            with row[1]:
                 st.markdown(f"""
-                <div class="sel-item">
-                    <span style="flex:1.2; font-weight:800; color:#1a7f37;">{item['Categoría']}</span>
-                    <span style="flex:3;">{item['Producto']}</span>
-                    <span style="flex:1.5; color:#57606a; font-size:0.8rem; text-align:center;">{item['Proveedor']}</span>
-                    <span class="price-tag" style="flex:1.2; text-align:right;">{fmt(item['Precio'])}</span>
+                <div class="detail-row-wrap">
+                    <div class="sel-item">
+                        <span style="flex:1.2; font-weight:800; color:#1a7f37;">{item['Categoría']}</span>
+                        <span style="flex:3;">{item['Producto']}</span>
+                        <span style="flex:1.5; color:#57606a; font-size:0.8rem; text-align:center;">{item['Proveedor']}</span>
+                        <span class="price-tag" style="flex:1.2; text-align:right;">{fmt(item['Precio'])}</span>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
-            
-            with col_del:
-                # X para borrar centrada verticalmente
-                st.write('<div style="padding-top:10px;">', unsafe_allow_html=True)
-                if st.button("✕", key=f"del_{idx}"):
-                    st.session_state.cotizacion.pop(idx)
-                    st.rerun()
-                st.write('</div>', unsafe_allow_html=True)
+
+            with row[2]:
+                st.markdown("<div class='delete-box'>", unsafe_allow_html=True)
+                st.button("✕", key=f"del_{idx}", use_container_width=True, on_click=delete_item, args=(idx,))
+                st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
     total = sum(i["Precio"] for i in cot)
+
     st.markdown(f"""
     <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:12px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">TOTAL NETO</div>
@@ -252,15 +296,20 @@ with right:
         <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
     </div>
     """, unsafe_allow_html=True)
-    
+
     st.write("")
+
     if st.button("🗑️ Vaciar Lista", use_container_width=True):
         st.session_state.cotizacion = []
         st.rerun()
-        
+
     if cot:
-        # Buffer para exportar a Excel
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
-        st.download_button("📊 Descargar Excel (.xlsx)", data=output.getvalue(), file_name="cotizacion.xlsx", use_container_width=True)
+        st.download_button(
+            "📊 Descargar Excel (.xlsx)",
+            data=output.getvalue(),
+            file_name="cotizacion.xlsx",
+            use_container_width=True
+        )

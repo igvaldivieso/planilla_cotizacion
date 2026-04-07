@@ -4,14 +4,14 @@ import io
 from datetime import datetime
 from textwrap import dedent
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Configuración de Página ──────────────────────────────────────────────────
 st.set_page_config(
     page_title="Cotizador FIA RAIZ 4.0",
     page_icon="🌱",
     layout="wide",
 )
 
-# ── Custom CSS ───────────────────────────────────────────────────────────────
+# ── Estilos CSS Personalizados ───────────────────────────────────────────────
 st.markdown(dedent("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap');
@@ -41,14 +41,18 @@ html, body, [class*="css"] {
 }
 
 .app-subtitle {
-    font-size: 0.72rem;
-    margin-top: 3px;
+    font-size: 0.75rem;
+    margin-top: 4px;
 }
 
 .app-subtitle a {
     color: #57606a;
     text-decoration: none;
+    font-weight: 500;
     transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .app-subtitle a:hover {
@@ -56,54 +60,14 @@ html, body, [class*="css"] {
     text-decoration: underline;
 }
 
-/* Selector / preview - Custom styled buttons to look like items */
-div[data-testid="stButton"]:has(> button#preview_btn) > button,
-div[data-testid="stButton"]:has(> button#preview_empty) > button {
-    background: #ffffff !important;
-    border: 1px solid #d0d7de !important;
-    border-left: 4px solid #2ea843 !important;
-    border-radius: 12px !important;
-    padding: 10px 12px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    font-size: 0.9rem !important;
-    width: 100% !important;
-    height: 58px !important; /* Match select box height */
-    text-align: left !important;
-    justify-content: flex-start !important;
-    font-family: 'Syne', sans-serif !important;
-    color: #1f2328 !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
-}
-
-div[data-testid="stButton"]:has(> button#preview_empty) > button {
-    color: #8b949e !important;
-    border-style: dashed !important;
-    border-left-style: solid !important;
-    justify-content: center !important;
-}
-
-div[data-testid="column"] button {
-    height: 58px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Detalle */
+/* Detalle de Items */
 .detail-title {
     font-size: 0.78rem;
     font-weight: 800;
     color: #57606a;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    height: 18px;
-}
-
-.total-container-offset {
-    margin-top: 28px;
 }
 
 .detail-row-wrap {
@@ -116,15 +80,11 @@ div[data-testid="column"] button {
 }
 
 .sel-item {
-    background: transparent;
-    border: none;
-    border-left: 4px solid #2ea843;
-    border-radius: 8px;
-    padding: 10px 12px;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.9rem;
+    border-left: 4px solid #2ea843;
+    padding-left: 12px;
     width: 100%;
 }
 
@@ -135,14 +95,14 @@ div[data-testid="column"] button {
     font-size: 1.05rem;
 }
 
-/* Checklist */
+/* Checklist Card */
 .checklist-card {
     background: #ffffff;
     border: 1px solid #d0d7de;
     border-radius: 14px;
-    padding: 14px;
-    margin-top: 18px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    padding: 16px;
+    margin-top: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .checklist-title {
@@ -151,7 +111,7 @@ div[data-testid="column"] button {
     color: #57606a;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .checklist-summary {
@@ -160,61 +120,36 @@ div[data-testid="column"] button {
     color: #57606a;
     background: #f6f8fa;
     border: 1px solid #d0d7de;
-    border-radius: 999px;
-    padding: 4px 9px;
+    border-radius: 20px;
+    padding: 3px 10px;
     display: inline-block;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
-.checklist-item {
-    margin-bottom: 8px;
-}
+.checklist-item { margin-bottom: 8px; }
 
 .checklist-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 7px 8px;
-    border: 1px solid #eef1f4;
-    border-radius: 10px;
+    padding: 6px 10px;
+    border: 1px solid #f0f2f5;
+    border-radius: 8px;
     background: #fbfcfd;
 }
 
-.checklist-name {
-    color: #24292f;
-    font-size: 0.88rem;
-    line-height: 1.2;
-    flex: 1;
-    padding-right: 8px;
-}
-
-.check-status {
-    font-weight: 800;
-    font-size: 0.84rem;
-    min-width: 72px;
-    text-align: right;
-    white-space: nowrap;
-}
-
+.checklist-name { color: #24292f; font-size: 0.85rem; flex: 1; }
+.check-status { font-weight: 700; font-size: 0.8rem; min-width: 80px; text-align: right; }
 .ok { color: #1a7f37; }
 .no { color: #cf222e; }
 
 .progress-track {
-    width: 100%;
-    height: 7px;
-    border-radius: 999px;
-    background: #eaeef2;
-    overflow: hidden;
-    margin-top: 7px;
+    width: 100%; height: 6px; border-radius: 10px; background: #eaeef2;
+    overflow: hidden; margin-top: 4px;
 }
+.progress-fill { height: 100%; background: #2ea843; transition: width 0.3s ease; }
 
-.progress-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: #2ea843;
-}
-
+/* Botones y Selectores */
 div[data-testid="stButton"] > button {
     border-radius: 10px !important;
 }
@@ -225,43 +160,30 @@ div[data-testid="column"] div[data-testid="stVerticalBlock"] {
 </style>
 """), unsafe_allow_html=True)
 
-# ── Data Loading ─────────────────────────────────────────────────────────────
+# ── Carga de Datos ───────────────────────────────────────────────────────────
 SHEET_ID = "1qWaXRLZtPQ4lX9Nvmkky_IJLaxLGDBTudTKrxAPU6Ak"
-SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
 @st.cache_data(ttl=60)
-def load_data_auto():
+def load_data():
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
     try:
         data = pd.read_csv(url)
         if "Precio" in data.columns:
-            data["Precio"] = (
-                data["Precio"]
-                .astype(str)
-                .str.replace(r'[\$\.\,\s]', '', regex=True)
-            )
+            data["Precio"] = data["Precio"].astype(str).str.replace(r'[\$\.\,\s]', '', regex=True)
             data["Precio"] = pd.to_numeric(data["Precio"], errors="coerce").fillna(0).astype(int)
         return data
-    except:
+    except Exception:
         return pd.DataFrame(columns=["Categoría", "Producto", "Proveedor", "Precio"])
 
-df = load_data_auto()
+df = load_data()
 
 if "cotizacion" not in st.session_state:
     st.session_state.cotizacion = []
 
-if "selected_item_preview" not in st.session_state:
-    st.session_state.selected_item_preview = None
-
 def fmt(price: int) -> str:
     return f"${price:,.0f}".replace(",", ".")
 
-def truncate(text, max_len):
-    if len(text) > max_len:
-        return text[:max_len] + '...'
-    return text
-
-# ── Acciones ─────────────────────────────────────────────────────────────────
+# ── Funciones de Acción ──────────────────────────────────────────────────────
 def move_item(index, direction):
     cot = st.session_state.cotizacion
     new_index = index + direction
@@ -269,126 +191,82 @@ def move_item(index, direction):
         cot[index], cot[new_index] = cot[new_index], cot[index]
 
 def delete_item(index):
-    cot = st.session_state.cotizacion
-    if 0 <= index < len(cot):
-        cot.pop(index)
+    st.session_state.cotizacion.pop(index)
 
-# ── Header ───────────────────────────────────────────────────────────────────
+# ── Encabezado ───────────────────────────────────────────────────────────────
 st.markdown(dedent(f"""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
     <div class="app-subtitle">
-        <a href="{SHEET_URL}" target="_blank">Base de datos: Planilla Google Sheets ↗</a>
+        <a href="https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit" target="_blank">
+            Gestionar base de datos en Google Sheets ↗
+        </a>
     </div>
 </div>
 """), unsafe_allow_html=True)
 
-# ── Selector Horizontal ──────────────────────────────────────────────────────
-cats_list = sorted(df["Categoría"].dropna().unique().tolist()) if not df.empty and "Categoría" in df.columns else []
-
-if not df.empty and cats_list:
-    # Ajustamos columnas para dar más espacio al botón de previsualización ancho y alto
-    c1, c2, c3, c_btn_preview, c_btns = st.columns([1.2, 1.8, 1.2, 4.2, 1.4])
+# ── Selector Principal ───────────────────────────────────────────────────────
+if not df.empty:
+    cats_list = sorted(df["Categoría"].dropna().unique().tolist())
+    
+    # Grid: Cat | Prod | Prov | Precio (Simulado con Selectbox) | Acciones
+    c1, c2, c3, c4, c5 = st.columns([1.5, 2.5, 1.5, 1.2, 1.2])
 
     with c1:
-        cat_sel = st.selectbox("Categoría", cats_list, label_visibility="collapsed")
+        cat_sel = st.selectbox("Cat", cats_list, label_visibility="collapsed")
 
     mask_cat = df[df["Categoría"] == cat_sel]
-    prods = sorted(mask_cat["Producto"].dropna().unique().tolist()) if not mask_cat.empty else []
+    prods = sorted(mask_cat["Producto"].dropna().unique().tolist())
     
     with c2:
-        prod_sel = st.selectbox("Producto", prods, label_visibility="collapsed") if prods else None
+        prod_sel = st.selectbox("Prod", prods, label_visibility="collapsed")
 
-    mask_prod = mask_cat[mask_cat["Producto"] == prod_sel] if prod_sel is not None else pd.DataFrame()
-    provs = mask_prod["Proveedor"].dropna().unique().tolist() if not mask_prod.empty else []
+    mask_prod = mask_cat[mask_cat["Producto"] == prod_sel]
+    provs = mask_prod["Proveedor"].dropna().unique().tolist()
     
     with c3:
-        prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed") if provs else None
+        prov_sel = st.selectbox("Prov", provs, label_visibility="collapsed")
 
-    final_row = None
-    if prov_sel is not None and not mask_prod.empty:
-        hit = mask_prod[mask_prod["Proveedor"] == prov_sel]
-        if not hit.empty:
-            final_row = hit.iloc[0]
-
+    # Obtener el precio actual basado en la selección
+    hit = mask_prod[mask_prod["Proveedor"] == prov_sel]
+    final_row = hit.iloc[0] if not hit.empty else None
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
-    # Nueva Vista Previa tipo Botón Seleccionable Ancho y Alto
-    with c_btn_preview:
-        if final_row is not None:
-            # Definir límites de truncado para que quepa en el ancho del botón
-            cat_short = truncate(final_row["Categoría"], 10)
-            prod_short = truncate(final_row["Producto"], 30)
-            prov_short = truncate(final_row["Proveedor"], 15)
-            price_fmt = fmt(precio_actual)
-            # El Precio NO se trunca.
-            label_text = f"[{cat_short}] {prod_short} | {prov_short} | {price_fmt}"
-            # Custom styled button with a specific key.
-            # Clicking it selects the item (updates session state, user did not specify action, assume selection).
-            submit_button = st.button(label_text, key="preview_btn", use_container_width=True, help="Haga clic para seleccionar")
-            if submit_button:
-                st.session_state.selected_item_preview = final_row
-        else:
-            # Placeholder button when no item selected.
-            st.button("Seleccione un producto...", key="preview_empty", disabled=True, use_container_width=True)
+    with c4:
+        # El precio se muestra en el MISMO tipo de componente que los selectores anteriores
+        st.selectbox("Precio", [fmt(precio_actual)], label_visibility="collapsed", disabled=True, key="price_preview")
 
-    with c_btns:
+    with c5:
         b1, b2, b3 = st.columns(3)
         with b1:
-            if st.button("➕", key="btn_add", use_container_width=True, disabled=final_row is None):
-                st.session_state.cotizacion.append({
-                    "Categoría": final_row["Categoría"],
-                    "Producto": final_row["Producto"],
-                    "Proveedor": final_row["Proveedor"],
-                    "Precio": precio_actual
-                })
-
+            if st.button("➕", key="add", use_container_width=True, disabled=final_row is None):
+                st.session_state.cotizacion.append(final_row.to_dict())
         with b2:
-            cheap = mask_cat.loc[mask_cat["Precio"].idxmin()] if not mask_cat.empty else None
-            if st.button("💲", key="btn_min", use_container_width=True, disabled=cheap is None):
-                st.session_state.cotizacion.append({
-                    "Categoría": cheap["Categoría"],
-                    "Producto": cheap["Producto"],
-                    "Proveedor": cheap["Proveedor"],
-                    "Precio": int(cheap["Precio"])
-                })
-
+            if st.button("💲", key="min", use_container_width=True, help="Añadir el más económico"):
+                st.session_state.cotizacion.append(mask_cat.loc[mask_cat["Precio"].idxmin()].to_dict())
         with b3:
-            exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
-            if st.button("💰", key="btn_max", use_container_width=True, disabled=exp is None):
-                st.session_state.cotizacion.append({
-                    "Categoría": exp["Categoría"],
-                    "Producto": exp["Producto"],
-                    "Proveedor": exp["Proveedor"],
-                    "Precio": int(exp["Precio"])
-                })
-else:
-    st.warning("No se pudieron cargar categorías desde la planilla.")
+            if st.button("💰", key="max", use_container_width=True, help="Añadir el más costoso"):
+                st.session_state.cotizacion.append(mask_cat.loc[mask_cat["Precio"].idxmax()].to_dict())
 
-# ── Detalle ──────────────────────────────────────────────────────────────────
+# ── Cuerpo Principal (Detalle y Checklist) ───────────────────────────────────
 st.write("")
-left, right = st.columns([3, 1.2], vertical_alignment="top")
+left, right = st.columns([3, 1.2])
 
 cot = st.session_state.cotizacion
 cats_en_cot = {item["Categoría"] for item in cot}
-completas = sum(1 for c in cats_list if c in cats_en_cot)
-total_cats = len(cats_list)
 
 with left:
     st.markdown('<div class="detail-title">Detalle de cotización</div>', unsafe_allow_html=True)
-
     if not cot:
-        st.info("La lista está vacía.")
+        st.info("No hay productos seleccionados aún.")
     else:
         for idx, item in enumerate(cot):
-            row = st.columns([0.55, 9.8, 0.65], gap="small", vertical_alignment="center")
-
-            with row[0]:
-                st.button("▲", key=f"up_{idx}", use_container_width=True, on_click=move_item, args=(idx, -1))
-                st.button("▼", key=f"down_{idx}", use_container_width=True, on_click=move_item, args=(idx, 1))
-
-            with row[1]:
-                st.markdown(dedent(f"""
+            r = st.columns([0.4, 9, 0.4], gap="small", vertical_alignment="center")
+            with r[0]:
+                st.button("▲", key=f"up{idx}", on_click=move_item, args=(idx, -1), use_container_width=True)
+                st.button("▼", key=f"dw{idx}", on_click=move_item, args=(idx, 1), use_container_width=True)
+            with r[1]:
+                st.markdown(f"""
                 <div class="detail-row-wrap">
                     <div class="sel-item">
                         <span style="flex:1.2; font-weight:800; color:#1a7f37;">{item['Categoría']}</span>
@@ -397,75 +275,63 @@ with left:
                         <span class="price-tag" style="flex:1.2; text-align:right;">{fmt(item['Precio'])}</span>
                     </div>
                 </div>
-                """), unsafe_allow_html=True)
-
-            with row[2]:
-                st.button("✕", key=f"del_{idx}", use_container_width=True, on_click=delete_item, args=(idx,))
+                """, unsafe_allow_html=True)
+            with r[2]:
+                st.button("✕", key=f"del{idx}", on_click=delete_item, args=(idx,), use_container_width=True)
 
 with right:
+    # Card de Total
     total = sum(i["Precio"] for i in cot)
-
-    st.markdown(dedent(f"""
-    <div class="total-container-offset">
-        <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:14px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Total neto</div>
-            <div style="font-size:2.2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin:10px 0;">{fmt(total)}</div>
-            <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
-        </div>
+    st.markdown(f"""
+    <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:14px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Total neto</div>
+        <div style="font-size:2.2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin:10px 0;">{fmt(total)}</div>
+        <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
     </div>
-    """), unsafe_allow_html=True)
-
+    """, unsafe_allow_html=True)
+    
     st.write("")
-
-    today_str = datetime.now().strftime("%d-%m-%Y")
-    default_name = f"cotización_rizotron_{today_str}"
-    custom_name = st.text_input("Nombre del archivo", placeholder=default_name, label_visibility="collapsed")
-    final_filename = f"{custom_name.strip() if custom_name.strip() else default_name}.xlsx"
-
+    
+    # Exportar y Limpiar
     if cot:
+        today = datetime.now().strftime("%d-%m-%Y")
+        fname = st.text_input("Nombre del archivo", placeholder=f"cotizacion_{today}", label_visibility="collapsed")
+        final_name = (fname if fname else f"cotizacion_{today}") + ".xlsx"
+        
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
-        st.download_button(
-            "📊 Descargar Excel",
-            data=output.getvalue(),
-            file_name=final_filename,
-            use_container_width=True
-        )
-
+        st.download_button("📊 Descargar Excel", data=output.getvalue(), file_name=final_name, use_container_width=True)
+    
     if st.button("🗑️ Vaciar lista", use_container_width=True):
         st.session_state.cotizacion = []
         st.rerun()
 
-    # ── Checklist ──
-    checklist_rows = []
-    for c in cats_list:
-        en_lista = c in cats_en_cot
-        icon = "✓" if en_lista else "✕"
-        status_class = "ok" if en_lista else "no"
-        label = "Incluida" if en_lista else "Pendiente"
-        pct = 100 if en_lista else 0
-
-        item_html = dedent(f"""
+    # ── Checklist de Categorías ──
+    if not df.empty:
+        completas = sum(1 for c in cats_list if c in cats_en_cot)
+        total_c = len(cats_list)
+        
+        checklist_rows = ""
+        for c in cats_list:
+            ready = c in cats_en_cot
+            icon = "✓" if ready else "✕"
+            cls = "ok" if ready else "no"
+            label = "Listo" if ready else "Pendiente"
+            pct = 100 if ready else 0
+            checklist_rows += f"""
             <div class="checklist-item">
                 <div class="checklist-row">
                     <div class="checklist-name">{c}</div>
-                    <div class="check-status {status_class}">{icon} {label}</div>
+                    <div class="check-status {cls}">{icon} {label}</div>
                 </div>
-                <div class="progress-track">
-                    <div class="progress-fill" style="width:{pct}%;"></div>
-                </div>
-            </div>
-        """).strip()
-        checklist_rows.append(item_html)
+                <div class="progress-track"><div class="progress-fill" style="width:{pct}%;"></div></div>
+            </div>"""
 
-    checklist_html = dedent(f"""
-    <div class="checklist-card">
+        st.markdown(f"""
         <div class="checklist-card">
-        <div class="checklist-title">Estado por categoría</div>
-        <div class="checklist-summary">{completas}/{total_cats} completas</div>
-    {''.join(checklist_rows) if cats_list else '<div style="color:#57606a; font-size:0.85rem;">No hay categorías cargadas.</div>'}
-    </div>
-    """).strip()
-
-    st.markdown(checklist_html, unsafe_allow_html=True)
+            <div class="checklist-title">Estado por categoría</div>
+            <div class="checklist-summary">{completas}/{total_c} categorías</div>
+            {checklist_rows}
+        </div>
+        """, unsafe_allow_html=True)

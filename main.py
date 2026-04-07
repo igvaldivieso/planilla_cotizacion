@@ -117,91 +117,6 @@ html, body, [class*="css"] {
     font-size: 1.05rem;
 }
 
-/* Checklist */
-.checklist-card {
-    background: #ffffff;
-    border: 1px solid #d0d7de;
-    border-radius: 14px;
-    padding: 14px;
-    margin-top: 18px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-
-.checklist-title {
-    font-size: 0.78rem;
-    font-weight: 800;
-    color: #57606a;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-bottom: 8px;
-}
-
-.checklist-summary {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: #57606a;
-    background: #f6f8fa;
-    border: 1px solid #d0d7de;
-    border-radius: 999px;
-    padding: 4px 9px;
-    display: inline-block;
-    margin-bottom: 10px;
-}
-
-.checklist-item {
-    margin-bottom: 8px;
-}
-
-.checklist-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 7px 8px;
-    border: 1px solid #eef1f4;
-    border-radius: 10px;
-    background: #fbfcfd;
-}
-
-.checklist-name {
-    color: #24292f;
-    font-size: 0.88rem;
-    line-height: 1.2;
-    flex: 1;
-    padding-right: 8px;
-}
-
-.check-status {
-    font-weight: 800;
-    font-size: 0.84rem;
-    min-width: 72px;
-    text-align: right;
-    white-space: nowrap;
-}
-
-.ok {
-    color: #1a7f37;
-}
-
-.no {
-    color: #cf222e;
-}
-
-.progress-track {
-    width: 100%;
-    height: 7px;
-    border-radius: 999px;
-    background: #eaeef2;
-    overflow: hidden;
-    margin-top: 7px;
-}
-
-.progress-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: #2ea843;
-}
-
 /* Botones */
 div[data-testid="stButton"] > button {
     border-radius: 10px !important;
@@ -259,7 +174,7 @@ def delete_item(index):
         cot.pop(index)
         st.rerun()
 
-# ── Header ───────────────────────────────────────────────────────────────────
+# ── Header limpio ────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
@@ -288,11 +203,7 @@ if not df.empty and cats_list:
     with c3:
         prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed") if provs else None
 
-    final_row = None
-    if prov_sel is not None and not mask_prod.empty:
-        hit = mask_prod[mask_prod["Proveedor"] == prov_sel]
-        if not hit.empty:
-            final_row = hit.iloc[0]
+    final_row = mask_prod[mask_prod["Proveedor"] == prov_sel].iloc[0] if prov_sel is not None and not mask_prod.empty and not mask_prod[mask_prod["Proveedor"] == prov_sel].empty else None
 
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
@@ -346,10 +257,6 @@ st.write("")
 left, right = st.columns([3, 1.2], vertical_alignment="top")
 
 cot = st.session_state.cotizacion
-cats_en_cot = {item["Categoría"] for item in cot}
-completas = sum(1 for c in cats_list if c in cats_en_cot)
-total_cats = len(cats_list)
-progress = (completas / total_cats * 100) if total_cats else 0
 
 with left:
     st.markdown("<div class='detail-title'>Detalle de cotización</div>", unsafe_allow_html=True)
@@ -411,34 +318,3 @@ with right:
     if st.button("🗑️ Vaciar lista", use_container_width=True):
         st.session_state.cotizacion = []
         st.rerun()
-
-    # Checklist renderizada en un solo bloque HTML, sin contenedores fantasma
-    items_html = ""
-    for c in cats_list:
-        en_lista = c in cats_en_cot
-        icon = "✓" if en_lista else "✕"
-        status_class = "ok" if en_lista else "no"
-        label = "Incluida" if en_lista else "Pendiente"
-        pct = 100 if en_lista else 0
-
-        items_html += f"""
-        <div class="checklist-item">
-            <div class="checklist-row">
-                <div class="checklist-name">{c}</div>
-                <div class="check-status {status_class}">{icon} {label}</div>
-            </div>
-            <div class="progress-track">
-                <div class="progress-fill" style="width:{pct}%;"></div>
-            </div>
-        </div>
-        """
-
-    checklist_html = f"""
-    <div class="checklist-card">
-        <div class="checklist-title">Estado por categoría</div>
-        <div class="checklist-summary">{completas}/{total_cats} completas</div>
-        {items_html if cats_list else "<div style='color:#57606a; font-size:0.85rem;'>No hay categorías cargadas.</div>"}
-    </div>
-    """
-
-    st.markdown(checklist_html, unsafe_allow_html=True)

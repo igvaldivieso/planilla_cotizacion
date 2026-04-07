@@ -264,7 +264,7 @@ def delete_item(index):
 st.markdown(dedent("""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
-    <div class="app-subtitle">Cotización rápida desde planilla Google Sheets</div>
+    <div class="app-subtitle">https://docs.google.com/spreadsheets/d/1qWaXRLZtPQ4lX9Nvmkky_IJLaxLGDBTudTKrxAPU6Ak/edit?gid=0#gid=0</div>
 </div>
 """), unsafe_allow_html=True)
 
@@ -320,7 +320,7 @@ if not df.empty and cats_list:
 
         with b2:
             cheap = mask_cat.loc[mask_cat["Precio"].idxmin()] if not mask_cat.empty else None
-            if st.button("⬇️ Barato", use_container_width=True, disabled=cheap is None):
+            if st.button("⬇️ Menor precio", use_container_width=True, disabled=cheap is None):
                 st.session_state.cotizacion.append({
                     "Categoría": cheap["Categoría"],
                     "Producto": cheap["Producto"],
@@ -331,7 +331,7 @@ if not df.empty and cats_list:
 
         with b3:
             exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
-            if st.button("⬆️ Caro", use_container_width=True, disabled=exp is None):
+            if st.button("⬆️ Mayor precio", use_container_width=True, disabled=exp is None):
                 st.session_state.cotizacion.append({
                     "Categoría": exp["Categoría"],
                     "Producto": exp["Producto"],

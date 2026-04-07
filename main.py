@@ -309,7 +309,7 @@ if not df.empty and cats_list:
         b1, b2, b3 = st.columns(3)
 
         with b1:
-            if st.button("➕ Añadir", use_container_width=True, disabled=final_row is None):
+            if st.button("➕", use_container_width=True, disabled=final_row is None):
                 st.session_state.cotizacion.append({
                     "Categoría": final_row["Categoría"],
                     "Producto": final_row["Producto"],

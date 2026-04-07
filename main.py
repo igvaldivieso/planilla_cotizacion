@@ -25,17 +25,13 @@ html, body, [class*="css"] {
     color: #1f2328;
 }
 
-/* Header card */
-.header-card {
-    background: #ffffff;
-    border: 1px solid #d0d7de;
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+/* Header simple */
+.app-header {
+    padding: 4px 2px 12px 2px;
+    margin-bottom: 8px;
 }
 
-.header-title {
+.app-title {
     font-size: 1.35rem;
     font-weight: 800;
     color: #1a7f37;
@@ -43,11 +39,10 @@ html, body, [class*="css"] {
     margin: 0;
 }
 
-.header-subtitle {
+.app-subtitle {
     font-size: 0.72rem;
     color: #57606a;
     margin-top: 3px;
-    letter-spacing: 0.2px;
 }
 
 /* Preview Price Card */
@@ -81,7 +76,7 @@ html, body, [class*="css"] {
     margin-top: 4px;
 }
 
-/* Sección detalle */
+/* Detalle */
 .detail-title {
     font-size: 0.78rem;
     font-weight: 800;
@@ -112,6 +107,7 @@ html, body, [class*="css"] {
     font-size: 0.9rem;
     width: 100%;
     min-height: 54px;
+    flex-wrap: wrap;
 }
 
 .price-tag {
@@ -131,22 +127,13 @@ html, body, [class*="css"] {
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
-.checklist-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f2f4;
-}
-
 .checklist-title {
     font-size: 0.78rem;
     font-weight: 800;
     color: #57606a;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    margin: 0;
+    margin-bottom: 8px;
 }
 
 .checklist-summary {
@@ -157,6 +144,8 @@ html, body, [class*="css"] {
     border: 1px solid #d0d7de;
     border-radius: 999px;
     padding: 4px 9px;
+    display: inline-block;
+    margin-bottom: 10px;
 }
 
 .checklist-item {
@@ -257,21 +246,12 @@ def delete_item(index):
         st.rerun()
 
 # ── Header limpio ────────────────────────────────────────────────────────────
-h1, h2 = st.columns([0.82, 0.18], vertical_alignment="center")
-
-with h1:
-    st.markdown("""
-    <div class="header-card">
-        <div class="header-title">🌱 Cotizador FIA RAIZ 4.0</div>
-        <div class="header-subtitle">Cotización rápida desde planilla Google Sheets</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with h2:
-    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Sincronizar", key="sync_btn", use_container_width=True, help="Actualizar desde la planilla"):
-        st.cache_data.clear()
-        st.rerun()
+st.markdown("""
+<div class="app-header">
+    <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
+    <div class="app-subtitle">Cotización rápida desde planilla Google Sheets</div>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Selector Horizontal ──────────────────────────────────────────────────────
 if not df.empty:
@@ -409,12 +389,10 @@ with right:
         st.rerun()
 
     st.markdown('<div class="checklist-card">', unsafe_allow_html=True)
-    st.markdown("""
-    <div class="checklist-header">
+    st.markdown(f"""
         <div class="checklist-title">Estado por categoría</div>
-        <div class="checklist-summary">{}/{} completas</div>
-    </div>
-    """.format(len(cats_en_cot), len(cats_list)), unsafe_allow_html=True)
+        <div class="checklist-summary">{len(cats_en_cot)}/{len(cats_list)} completas</div>
+    """, unsafe_allow_html=True)
 
     if not cats_list:
         st.caption("No hay categorías cargadas.")

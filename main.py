@@ -56,16 +56,32 @@ html, body, [class*="css"] {
     text-decoration: underline;
 }
 
-/* Selector / preview */
-.preview-row-wrap {
-    background: #ffffff;
-    border: 1px dashed #2ea84380;
-    border-radius: 12px;
-    padding: 8px 10px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    height: 58px;
-    display: flex;
-    align-items: center;
+/* Selector / preview - Custom styled buttons to look like items */
+div[data-testid="stButton"]:has(> button#preview_btn) > button,
+div[data-testid="stButton"]:has(> button#preview_empty) > button {
+    background: #ffffff !important;
+    border: 1px solid #d0d7de !important;
+    border-left: 4px solid #2ea843 !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 0.9rem !important;
+    width: 100% !important;
+    height: 58px !important; /* Match select box height */
+    text-align: left !important;
+    justify-content: flex-start !important;
+    font-family: 'Syne', sans-serif !important;
+    color: #1f2328 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+}
+
+div[data-testid="stButton"]:has(> button#preview_empty) > button {
+    color: #8b949e !important;
+    border-style: dashed !important;
+    border-left-style: solid !important;
+    justify-content: center !important;
 }
 
 div[data-testid="column"] button {
@@ -234,8 +250,16 @@ df = load_data_auto()
 if "cotizacion" not in st.session_state:
     st.session_state.cotizacion = []
 
+if "selected_item_preview" not in st.session_state:
+    st.session_state.selected_item_preview = None
+
 def fmt(price: int) -> str:
     return f"${price:,.0f}".replace(",", ".")
+
+def truncate(text, max_len):
+    if len(text) > max_len:
+        return text[:max_len] + '...'
+    return text
 
 # ── Acciones ─────────────────────────────────────────────────────────────────
 def move_item(index, direction):
@@ -263,8 +287,8 @@ st.markdown(dedent(f"""
 cats_list = sorted(df["Categoría"].dropna().unique().tolist()) if not df.empty and "Categoría" in df.columns else []
 
 if not df.empty and cats_list:
-    # Ajustamos columnas para dar más espacio a la previsualización tipo "fila"
-    c1, c2, c3, c_prev, c_btns = st.columns([1.2, 1.8, 1.2, 4.2, 1.4])
+    # Ajustamos columnas para dar más espacio al botón de previsualización ancho y alto
+    c1, c2, c3, c_btn_preview, c_btns = st.columns([1.2, 1.8, 1.2, 4.2, 1.4])
 
     with c1:
         cat_sel = st.selectbox("Categoría", cats_list, label_visibility="collapsed")
@@ -289,21 +313,24 @@ if not df.empty and cats_list:
 
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
-    # Nueva Vista Previa tipo Item
-    with c_prev:
+    # Nueva Vista Previa tipo Botón Seleccionable Ancho y Alto
+    with c_btn_preview:
         if final_row is not None:
-            st.markdown(dedent(f"""
-            <div class="preview-row-wrap">
-                <div class="sel-item" style="border-left-color: #2ea84380; opacity: 0.7;">
-                    <span style="flex:1.2; font-weight:800; color:#1a7f37; font-size:0.75rem;">PREVIEW</span>
-                    <span style="flex:2.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{final_row['Producto']}</span>
-                    <span style="flex:1.2; color:#57606a; font-size:0.75rem; text-align:center;">{final_row['Proveedor']}</span>
-                    <span class="price-tag" style="flex:1.2; text-align:right;">{fmt(precio_actual)}</span>
-                </div>
-            </div>
-            """), unsafe_allow_html=True)
+            # Definir límites de truncado para que quepa en el ancho del botón
+            cat_short = truncate(final_row["Categoría"], 10)
+            prod_short = truncate(final_row["Producto"], 30)
+            prov_short = truncate(final_row["Proveedor"], 15)
+            price_fmt = fmt(precio_actual)
+            # El Precio NO se trunca.
+            label_text = f"[{cat_short}] {prod_short} | {prov_short} | {price_fmt}"
+            # Custom styled button with a specific key.
+            # Clicking it selects the item (updates session state, user did not specify action, assume selection).
+            submit_button = st.button(label_text, key="preview_btn", use_container_width=True, help="Haga clic para seleccionar")
+            if submit_button:
+                st.session_state.selected_item_preview = final_row
         else:
-            st.markdown('<div class="preview-row-wrap" style="justify-content:center; color:#8b949e;">Seleccione un producto...</div>', unsafe_allow_html=True)
+            # Placeholder button when no item selected.
+            st.button("Seleccione un producto...", key="preview_empty", disabled=True, use_container_width=True)
 
     with c_btns:
         b1, b2, b3 = st.columns(3)
@@ -434,6 +461,7 @@ with right:
 
     checklist_html = dedent(f"""
     <div class="checklist-card">
+        <div class="checklist-card">
         <div class="checklist-title">Estado por categoría</div>
         <div class="checklist-summary">{completas}/{total_cats} completas</div>
     {''.join(checklist_rows) if cats_list else '<div style="color:#57606a; font-size:0.85rem;">No hay categorías cargadas.</div>'}

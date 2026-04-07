@@ -44,20 +44,52 @@ html, body, [class*="css"] { font-family: 'Syne', sans-serif; font-size: 13px; }
     border: 1px solid #d0d7de;
     border-left: 4px solid #2ea843;
     border-radius: 6px;
-    padding: 6px 12px;
+    padding: 10px 15px;
     display: flex; align-items: center;
     font-size: 0.85rem;
     width: 100%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 .price-tag { font-family: 'DM Mono', monospace; font-weight: 700; color: #1a7f37; }
 
-/* Botones de movimiento y control */
-.move-btn button {
-    padding: 2px 5px !important;
-    height: 24px !important;
-    min-height: 24px !important;
+/* Contenedor de botones de movimiento */
+.move-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: 100%;
+}
+
+/* Estilización de los botones de flecha de Streamlit */
+div.stButton > button:has(div:contains("v")), 
+div.stButton > button:has(div:contains("^")) {
+    padding: 0px !important;
+    width: 28px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    background-color: transparent !important;
+    border: 1px solid #d0d7de !important;
+    color: #57606a !important;
     line-height: 1 !important;
-    font-size: 12px !important;
+    font-size: 10px !important;
+}
+
+div.stButton > button:hover {
+    border-color: #2ea843 !important;
+    color: #2ea843 !important;
+    background-color: #f0fff4 !important;
+}
+
+/* Botón Eliminar (X) */
+.del-btn button {
+    border: none !important;
+    color: #cf222e !important;
+    background: transparent !important;
+}
+.del-btn button:hover {
+    background: #ffebe9 !important;
 }
 
 .block-container { padding-top: 1rem; padding-bottom: 1rem; }
@@ -90,7 +122,6 @@ def fmt(price: int) -> str:
 def move_item(index, direction):
     new_index = index + direction
     if 0 <= new_index < len(st.session_state.cotizacion):
-        # Swap de elementos
         st.session_state.cotizacion[index], st.session_state.cotizacion[new_index] = \
             st.session_state.cotizacion[new_index], st.session_state.cotizacion[index]
 
@@ -161,29 +192,26 @@ st.write("")
 left, right = st.columns([3, 1.2])
 
 with left:
-    st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:#57606a; margin-bottom:5px;'>DETALLE DE COTIZACIÓN</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:#57606a; margin-bottom:10px;'>DETALLE DE COTIZACIÓN</div>", unsafe_allow_html=True)
     cot = st.session_state.cotizacion
     
     if not cot:
         st.info("La lista está vacía.")
     else:
         for idx, item in enumerate(cot):
-            # Columnas: [Mover, Info, Borrar]
-            col_move, col_info, col_del = st.columns([1, 10, 1])
+            # Layout de fila: [Controles de Movimiento, Tarjeta Info, Eliminar]
+            col_move, col_info, col_del = st.columns([0.25, 10, 0.4])
             
             with col_move:
-                # Botones de subir/bajar flecha
-                st.markdown('<div class="move-btn">', unsafe_allow_html=True)
-                m1, m2 = st.columns(2)
-                with m1:
-                    if st.button("▲", key=f"up_{idx}", help="Subir"):
-                        move_item(idx, -1)
-                        st.rerun()
-                with m2:
-                    if st.button("▼", key=f"down_{idx}", help="Bajar"):
-                        move_item(idx, 1)
-                        st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                # Contenedor vertical para las flechas
+                st.write('<div class="move-controls">', unsafe_allow_html=True)
+                if st.button("^", key=f"up_{idx}", help="Subir"):
+                    move_item(idx, -1)
+                    st.rerun()
+                if st.button("v", key=f"down_{idx}", help="Bajar"):
+                    move_item(idx, 1)
+                    st.rerun()
+                st.write('</div>', unsafe_allow_html=True)
 
             with col_info:
                 st.markdown(f"""
@@ -196,19 +224,22 @@ with left:
                 """, unsafe_allow_html=True)
             
             with col_del:
+                st.write('<div class="del-btn">', unsafe_allow_html=True)
                 if st.button("✕", key=f"del_{idx}", help="Eliminar"):
                     st.session_state.cotizacion.pop(idx)
                     st.rerun()
+                st.write('</div>', unsafe_allow_html=True)
 
 with right:
     total = sum(i["Precio"] for i in cot)
     st.markdown(f"""
-    <div style="background:#ffffff; border:1px solid #d0d7de; padding:15px; border-radius:10px; text-align:center;">
-        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase;">PRESUPUESTO TOTAL</div>
-        <div style="font-size:1.8rem; font-weight:800; color:#1a7f37; font-family:DM Mono;">{fmt(total)}</div>
+    <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:10px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px;">PRESUPUESTO TOTAL</div>
+        <div style="font-size:2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin-top:5px;">{fmt(total)}</div>
     </div>
     """, unsafe_allow_html=True)
     
+    st.write("")
     if st.button("🗑️ Vaciar Lista", use_container_width=True):
         st.session_state.cotizacion = []
         st.rerun()

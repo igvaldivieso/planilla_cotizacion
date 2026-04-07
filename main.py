@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import io
+from datetime import datetime
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -112,6 +113,13 @@ div[data-testid="stButton"] > button {
     font-size: 12px !important;
 }
 
+/* Estilo específico para el botón de sincronización (más discreto) */
+.sync-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Reduce el espacio vertical entre botones apilados en la columna de movimiento */
 div[data-testid="column"] div[data-testid="stVerticalBlock"] {
     gap: 0rem !important;
@@ -174,12 +182,27 @@ def delete_item(index):
         st.rerun()
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="header-mini">
-    <h1>🌱 Cotizador FIA RAIZ 4.0</h1>
-    <div style="font-family:'DM Mono'; color:#57606a; font-size:0.75rem;">AUTO-SYNC: ON</div>
-</div>
-""", unsafe_allow_html=True)
+# Usamos columnas para colocar el título y el botón de sincronización a la derecha
+head_col1, head_col2 = st.columns([0.8, 0.2])
+
+with head_col1:
+    st.markdown("""
+    <div style="display: flex; align-items: center; height: 100%;">
+        <h1 style="font-size: 1.4rem; margin: 0; color: #1a7f37; font-family: 'Syne', sans-serif;">🌱 Cotizador FIA RAIZ 4.0</h1>
+    </div>
+    """, unsafe_allow_html=True)
+
+with head_col2:
+    # Botón de sincronización manual discreto
+    subcol1, subcol2 = st.columns([0.6, 0.4])
+    with subcol1:
+        st.markdown("<div style='font-family:\"DM Mono\"; color:#57606a; font-size:0.75rem; text-align:right; margin-top:8px;'>AUTO-SYNC: ON</div>", unsafe_allow_html=True)
+    with subcol2:
+        if st.button("🔄", help="Sincronizar planilla de Google"):
+            st.cache_data.clear()
+            st.rerun()
+
+st.markdown("---")
 
 # ── Selector Horizontal ───────────────────────────────────────────────────────
 if not df.empty:
@@ -299,17 +322,31 @@ with right:
 
     st.write("")
 
-    if st.button("🗑️ Vaciar Lista", use_container_width=True):
-        st.session_state.cotizacion = []
-        st.rerun()
+    # Campo para nombre del archivo
+    today_str = datetime.now().strftime("%d-%m-%Y")
+    default_filename = f"cotización_rizotron_{today_str}"
+    
+    file_name_input = st.text_input(
+        "Nombre del Excel", 
+        placeholder=default_filename,
+        help="Si se deja vacío, se usará el nombre por defecto con la fecha de hoy."
+    )
+    
+    # Lógica de nombre final
+    final_name = file_name_input.strip() if file_name_input.strip() else default_filename
 
     if cot:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
+        
         st.download_button(
             "📊 Descargar Excel (.xlsx)",
             data=output.getvalue(),
-            file_name="cotizacion.xlsx",
+            file_name=f"{final_name}.xlsx",
             use_container_width=True
         )
+
+    if st.button("🗑️ Vaciar Lista", use_container_width=True):
+        st.session_state.cotizacion = []
+        st.rerun()

@@ -238,7 +238,7 @@ st.markdown(dedent(f"""
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
     <div class="app-subtitle">
         <a href="{SHEET_URL}" target="_blank">
-            Acceder a la base de datos de origen (Google Sheets) ↗
+            Acceder a planilla (Google Sheets) ↗
         </a>
     </div>
 </div>

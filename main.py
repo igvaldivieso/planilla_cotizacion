@@ -259,7 +259,7 @@ def delete_item(index):
         cot.pop(index)
         st.rerun()
 
-# ── Header limpio ────────────────────────────────────────────────────────────
+# ── Header ───────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
@@ -288,7 +288,11 @@ if not df.empty and cats_list:
     with c3:
         prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed") if provs else None
 
-    final_row = mask_prod[mask_prod["Proveedor"] == prov_sel].iloc[0] if prov_sel is not None and not mask_prod.empty and not mask_prod[mask_prod["Proveedor"] == prov_sel].empty else None
+    final_row = None
+    if prov_sel is not None and not mask_prod.empty:
+        hit = mask_prod[mask_prod["Proveedor"] == prov_sel]
+        if not hit.empty:
+            final_row = hit.iloc[0]
 
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
@@ -408,32 +412,33 @@ with right:
         st.session_state.cotizacion = []
         st.rerun()
 
-    st.markdown('<div class="checklist-card">', unsafe_allow_html=True)
-    st.markdown(f"""
+    # Checklist renderizada en un solo bloque HTML, sin contenedores fantasma
+    items_html = ""
+    for c in cats_list:
+        en_lista = c in cats_en_cot
+        icon = "✓" if en_lista else "✕"
+        status_class = "ok" if en_lista else "no"
+        label = "Incluida" if en_lista else "Pendiente"
+        pct = 100 if en_lista else 0
+
+        items_html += f"""
+        <div class="checklist-item">
+            <div class="checklist-row">
+                <div class="checklist-name">{c}</div>
+                <div class="check-status {status_class}">{icon} {label}</div>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" style="width:{pct}%;"></div>
+            </div>
+        </div>
+        """
+
+    checklist_html = f"""
+    <div class="checklist-card">
         <div class="checklist-title">Estado por categoría</div>
         <div class="checklist-summary">{completas}/{total_cats} completas</div>
-    """, unsafe_allow_html=True)
+        {items_html if cats_list else "<div style='color:#57606a; font-size:0.85rem;'>No hay categorías cargadas.</div>"}
+    </div>
+    """
 
-    if not cats_list:
-        st.caption("No hay categorías cargadas.")
-    else:
-        for c in cats_list:
-            en_lista = c in cats_en_cot
-            icon = "✓" if en_lista else "✕"
-            status_class = "ok" if en_lista else "no"
-            label = "Incluida" if en_lista else "Pendiente"
-            pct = 100 if en_lista else 0
-
-            st.markdown(f"""
-            <div class="checklist-item">
-                <div class="checklist-row">
-                    <div class="checklist-name">{c}</div>
-                    <div class="check-status {status_class}">{icon} {label}</div>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill" style="width:{pct}%;"></div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(checklist_html, unsafe_allow_html=True)

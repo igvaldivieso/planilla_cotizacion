@@ -42,22 +42,30 @@ html, body, [class*="css"] {
 
 .app-subtitle {
     font-size: 0.72rem;
-    color: #57606a;
     margin-top: 3px;
 }
 
+.app-subtitle a {
+    color: #57606a;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.app-subtitle a:hover {
+    color: #1a7f37;
+    text-decoration: underline;
+}
+
 /* Selector / preview */
-.preview-box {
-    background: #dafbe1;
-    border: 1px solid #2ea84340;
-    border-radius: 10px;
-    padding: 7px 12px;
-    text-align: center;
-    height: 58px; 
+.preview-row-wrap {
+    background: #ffffff;
+    border: 1px dashed #2ea84380;
+    border-radius: 12px;
+    padding: 8px 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    height: 58px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-sizing: border-box;
+    align-items: center;
 }
 
 div[data-testid="column"] button {
@@ -65,24 +73,6 @@ div[data-testid="column"] button {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.preview-label {
-    font-size: 0.6rem;
-    color: #1a7f37;
-    text-transform: uppercase;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: 0.3px;
-}
-
-.preview-value {
-    font-family: 'DM Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #116329;
-    line-height: 1.2;
-    margin-top: 4px;
 }
 
 /* Detalle */
@@ -220,10 +210,12 @@ div[data-testid="column"] div[data-testid="stVerticalBlock"] {
 """), unsafe_allow_html=True)
 
 # ── Data Loading ─────────────────────────────────────────────────────────────
+SHEET_ID = "1qWaXRLZtPQ4lX9Nvmkky_IJLaxLGDBTudTKrxAPU6Ak"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
+
 @st.cache_data(ttl=60)
 def load_data_auto():
-    sheet_id = "1qWaXRLZtPQ4lX9Nvmkky_IJLaxLGDBTudTKrxAPU6Ak"
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
+    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
     try:
         data = pd.read_csv(url)
         if "Precio" in data.columns:
@@ -245,7 +237,7 @@ if "cotizacion" not in st.session_state:
 def fmt(price: int) -> str:
     return f"${price:,.0f}".replace(",", ".")
 
-# ── Acciones (Callbacks: Streamlit re-ejecuta automáticamente al terminar) ──
+# ── Acciones ─────────────────────────────────────────────────────────────────
 def move_item(index, direction):
     cot = st.session_state.cotizacion
     new_index = index + direction
@@ -258,10 +250,12 @@ def delete_item(index):
         cot.pop(index)
 
 # ── Header ───────────────────────────────────────────────────────────────────
-st.markdown(dedent("""
+st.markdown(dedent(f"""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
-    <div class="app-subtitle">Cotización rápida desde planilla Google Sheets</div>
+    <div class="app-subtitle">
+        <a href="{SHEET_URL}" target="_blank">Base de datos: Planilla Google Sheets ↗</a>
+    </div>
 </div>
 """), unsafe_allow_html=True)
 
@@ -269,7 +263,8 @@ st.markdown(dedent("""
 cats_list = sorted(df["Categoría"].dropna().unique().tolist()) if not df.empty and "Categoría" in df.columns else []
 
 if not df.empty and cats_list:
-    c1, c2, c3, c4, c5 = st.columns([1.5, 2.5, 1.5, 1.2, 2.5])
+    # Ajustamos columnas para dar más espacio a la previsualización tipo "fila"
+    c1, c2, c3, c_prev, c_btns = st.columns([1.2, 1.8, 1.2, 4.2, 1.4])
 
     with c1:
         cat_sel = st.selectbox("Categoría", cats_list, label_visibility="collapsed")
@@ -294,15 +289,23 @@ if not df.empty and cats_list:
 
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
-    with c4:
-        st.markdown(dedent(f"""
-        <div class="preview-box">
-            <div class="preview-label">VISTA PREVIA</div>
-            <div class="preview-value">{fmt(precio_actual)}</div>
-        </div>
-        """), unsafe_allow_html=True)
+    # Nueva Vista Previa tipo Item
+    with c_prev:
+        if final_row is not None:
+            st.markdown(dedent(f"""
+            <div class="preview-row-wrap">
+                <div class="sel-item" style="border-left-color: #2ea84380; opacity: 0.7;">
+                    <span style="flex:1.2; font-weight:800; color:#1a7f37; font-size:0.75rem;">PREVIEW</span>
+                    <span style="flex:2.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{final_row['Producto']}</span>
+                    <span style="flex:1.2; color:#57606a; font-size:0.75rem; text-align:center;">{final_row['Proveedor']}</span>
+                    <span class="price-tag" style="flex:1.2; text-align:right;">{fmt(precio_actual)}</span>
+                </div>
+            </div>
+            """), unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="preview-row-wrap" style="justify-content:center; color:#8b949e;">Seleccione un producto...</div>', unsafe_allow_html=True)
 
-    with c5:
+    with c_btns:
         b1, b2, b3 = st.columns(3)
         with b1:
             if st.button("➕", key="btn_add", use_container_width=True, disabled=final_row is None):
@@ -325,7 +328,7 @@ if not df.empty and cats_list:
 
         with b3:
             exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
-            if st.button("💲💲💲", key="btn_max", use_container_width=True, disabled=exp is None):
+            if st.button("💰", key="btn_max", use_container_width=True, disabled=exp is None):
                 st.session_state.cotizacion.append({
                     "Categoría": exp["Categoría"],
                     "Producto": exp["Producto"],

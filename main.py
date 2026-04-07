@@ -53,14 +53,13 @@ html, body, [class*="css"] {
     border-radius: 10px;
     padding: 7px 12px;
     text-align: center;
-    height: 58px; /* Altura fija para coincidir con botones */
+    height: 58px; 
     display: flex;
     flex-direction: column;
     justify-content: center;
     box-sizing: border-box;
 }
 
-/* Forzar altura de botones en la fila del selector para igualar la vista previa */
 div[data-testid="column"] button {
     height: 58px !important;
     display: flex;
@@ -94,12 +93,11 @@ div[data-testid="column"] button {
     margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    height: 18px; /* Altura fija para facilitar alineación */
+    height: 18px;
 }
 
-/* Alineación del Total Neto con el primer elemento */
 .total-container-offset {
-    margin-top: 28px; /* Altura del título (18px) + su margen inferior (10px) */
+    margin-top: 28px;
 }
 
 .detail-row-wrap {
@@ -211,12 +209,10 @@ div[data-testid="column"] button {
     background: #2ea843;
 }
 
-/* Botones generales */
 div[data-testid="stButton"] > button {
     border-radius: 10px !important;
 }
 
-/* Ajustes de columnas */
 div[data-testid="column"] div[data-testid="stVerticalBlock"] {
     gap: 0rem !important;
 }
@@ -249,19 +245,17 @@ if "cotizacion" not in st.session_state:
 def fmt(price: int) -> str:
     return f"${price:,.0f}".replace(",", ".")
 
-# ── Acciones ─────────────────────────────────────────────────────────────────
+# ── Acciones (Callbacks: Streamlit re-ejecuta automáticamente al terminar) ──
 def move_item(index, direction):
     cot = st.session_state.cotizacion
     new_index = index + direction
     if 0 <= new_index < len(cot):
         cot[index], cot[new_index] = cot[new_index], cot[index]
-        st.rerun()
 
 def delete_item(index):
     cot = st.session_state.cotizacion
     if 0 <= index < len(cot):
         cot.pop(index)
-        st.rerun()
 
 # ── Header ───────────────────────────────────────────────────────────────────
 st.markdown(dedent("""
@@ -318,7 +312,6 @@ if not df.empty and cats_list:
                     "Proveedor": final_row["Proveedor"],
                     "Precio": precio_actual
                 })
-                st.rerun()
 
         with b2:
             cheap = mask_cat.loc[mask_cat["Precio"].idxmin()] if not mask_cat.empty else None
@@ -329,7 +322,6 @@ if not df.empty and cats_list:
                     "Proveedor": cheap["Proveedor"],
                     "Precio": int(cheap["Precio"])
                 })
-                st.rerun()
 
         with b3:
             exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
@@ -340,7 +332,6 @@ if not df.empty and cats_list:
                     "Proveedor": exp["Proveedor"],
                     "Precio": int(exp["Precio"])
                 })
-                st.rerun()
 else:
     st.warning("No se pudieron cargar categorías desde la planilla.")
 
@@ -384,7 +375,6 @@ with left:
 with right:
     total = sum(i["Precio"] for i in cot)
 
-    # El contenedor del total ahora incluye la clase 'total-container-offset'
     st.markdown(dedent(f"""
     <div class="total-container-offset">
         <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:14px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">

@@ -4,7 +4,7 @@ import io
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Rizotron IoT · Editor",
+    page_title="Cotizador FIA RAIZ 4.0",
     page_icon="🌱",
     layout="wide",
 )
@@ -176,7 +176,7 @@ def delete_item(index):
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="header-mini">
-    <h1>🌱 Rizotron IoT</h1>
+    <h1>🌱 Cotizador FIA RAIZ 4.0</h1>
     <div style="font-family:'DM Mono'; color:#57606a; font-size:0.75rem;">AUTO-SYNC: ON</div>
 </div>
 """, unsafe_allow_html=True)

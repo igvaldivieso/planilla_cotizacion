@@ -27,6 +27,11 @@ html, body, [class*="css"] {
 }
 
 /* Header */
+.app-header {
+    padding: 4px 2px 12px 2px;
+    margin-bottom: 8px;
+}
+
 .app-title {
     font-size: 1.35rem;
     font-weight: 800;
@@ -39,7 +44,6 @@ html, body, [class*="css"] {
     font-size: 0.72rem;
     color: #57606a;
     margin-top: 3px;
-    margin-bottom: 10px;
 }
 
 /* Selector / preview */
@@ -114,8 +118,8 @@ html, body, [class*="css"] {
     font-size: 1.05rem;
 }
 
-/* Checklist nativa */
-.checklist-wrap {
+/* Checklist */
+.checklist-card {
     background: #ffffff;
     border: 1px solid #d0d7de;
     border-radius: 14px;
@@ -124,26 +128,16 @@ html, body, [class*="css"] {
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
-.checklist-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f2f4;
-}
-
-.checklist-title2 {
+.checklist-title {
     font-size: 0.78rem;
     font-weight: 800;
     color: #57606a;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    margin: 0;
+    margin-bottom: 8px;
 }
 
-.checklist-summary2 {
+.checklist-summary {
     font-family: 'DM Mono', monospace;
     font-size: 0.72rem;
     color: #57606a;
@@ -151,41 +145,62 @@ html, body, [class*="css"] {
     border: 1px solid #d0d7de;
     border-radius: 999px;
     padding: 4px 9px;
-    white-space: nowrap;
+    display: inline-block;
+    margin-bottom: 10px;
 }
 
-.check-row {
-    background: #fbfcfd;
-    border: 1px solid #eef1f4;
-    border-radius: 10px;
-    padding: 8px 10px;
+.checklist-item {
     margin-bottom: 8px;
 }
 
-.check-row:last-child {
-    margin-bottom: 0;
+.checklist-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 8px;
+    border: 1px solid #eef1f4;
+    border-radius: 10px;
+    background: #fbfcfd;
 }
 
-.check-name {
-    font-size: 0.88rem;
+.checklist-name {
     color: #24292f;
+    font-size: 0.88rem;
     line-height: 1.2;
+    flex: 1;
+    padding-right: 8px;
 }
 
-.check-status-ok {
+.check-status {
+    font-weight: 800;
+    font-size: 0.84rem;
+    min-width: 72px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ok {
     color: #1a7f37;
-    font-weight: 800;
-    font-size: 0.84rem;
-    text-align: right;
-    white-space: nowrap;
 }
 
-.check-status-no {
+.no {
     color: #cf222e;
-    font-weight: 800;
-    font-size: 0.84rem;
-    text-align: right;
-    white-space: nowrap;
+}
+
+.progress-track {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    background: #eaeef2;
+    overflow: hidden;
+    margin-top: 7px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: #2ea843;
 }
 
 /* Botones */
@@ -220,7 +235,7 @@ def load_data_auto():
             )
             data["Precio"] = pd.to_numeric(data["Precio"], errors="coerce").fillna(0).astype(int)
         return data
-    except Exception:
+    except:
         return pd.DataFrame(columns=["Categoría", "Producto", "Proveedor", "Precio"])
 
 df = load_data_auto()
@@ -247,8 +262,10 @@ def delete_item(index):
 
 # ── Header ───────────────────────────────────────────────────────────────────
 st.markdown(dedent("""
-<div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
-<div class="app-subtitle">Cotización rápida desde planilla Google Sheets</div>
+<div class="app-header">
+    <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
+    <div class="app-subtitle">Cotización rápida desde planilla Google Sheets</div>
+</div>
 """), unsafe_allow_html=True)
 
 # ── Selector Horizontal ──────────────────────────────────────────────────────
@@ -365,8 +382,15 @@ with left:
 with right:
     total = sum(i["Precio"] for i in cot)
 
-    st.metric("Total neto", fmt(total))
-    st.caption(f"{len(cot)} componentes")
+    st.markdown(dedent(f"""
+    <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:14px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Total neto</div>
+        <div style="font-size:2.2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin:10px 0;">{fmt(total)}</div>
+        <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
+    </div>
+    """), unsafe_allow_html=True)
+
+    st.write("")
 
     today_str = datetime.now().strftime("%d-%m-%Y")
     default_name = f"cotización_rizotron_{today_str}"
@@ -388,27 +412,36 @@ with right:
         st.session_state.cotizacion = []
         st.rerun()
 
-    st.markdown('<div class="checklist-wrap">', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="checklist-head"><div class="checklist-title2">Estado por categoría</div><div class="checklist-summary2">{completas}/{total_cats} completas</div></div>',
-        unsafe_allow_html=True
-    )
+    # ── Ajuste para evitar el error del </div> literal ──
+    checklist_rows = []
+    for c in cats_list:
+        en_lista = c in cats_en_cot
+        icon = "✓" if en_lista else "✕"
+        status_class = "ok" if en_lista else "no"
+        label = "Incluida" if en_lista else "Pendiente"
+        pct = 100 if en_lista else 0
 
-    if not cats_list:
-        st.caption("No hay categorías cargadas.")
-    else:
-        for c in cats_list:
-            en_lista = c in cats_en_cot
-            etiqueta = "Incluida" if en_lista else "Pendiente"
-            clase = "check-status-ok" if en_lista else "check-status-no"
-            simbolo = "✓" if en_lista else "✕"
+        # Importante: el .strip() elimina espacios en blanco que Markdown confunde con código
+        item_html = dedent(f"""
+            <div class="checklist-item">
+                <div class="checklist-row">
+                    <div class="checklist-name">{c}</div>
+                    <div class="check-status {status_class}">{icon} {label}</div>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:{pct}%;"></div>
+                </div>
+            </div>
+        """).strip()
+        checklist_rows.append(item_html)
 
-            row = st.columns([4.5, 1.5], vertical_alignment="center")
-            with row[0]:
-                st.markdown(f'<div class="check-name">{c}</div>', unsafe_allow_html=True)
-            with row[1]:
-                st.markdown(f'<div class="{clase}">{simbolo} {etiqueta}</div>', unsafe_allow_html=True)
+    # Pegamos la unión de filas directamente al margen izquierdo del f-string
+    checklist_html = dedent(f"""
+    <div class="checklist-card">
+        <div class="checklist-title">Estado por categoría</div>
+        <div class="checklist-summary">{completas}/{total_cats} completas</div>
+    {''.join(checklist_rows) if cats_list else '<div style="color:#57606a; font-size:0.85rem;">No hay categorías cargadas.</div>'}
+    </div>
+    """).strip()
 
-        st.progress(completas / total_cats if total_cats else 0)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(checklist_html, unsafe_allow_html=True)

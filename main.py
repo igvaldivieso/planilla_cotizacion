@@ -25,7 +25,7 @@ html, body, [class*="css"] {
     color: #1f2328;
 }
 
-/* Header simple */
+/* Header */
 .app-header {
     padding: 4px 2px 12px 2px;
     margin-bottom: 8px;
@@ -45,7 +45,7 @@ html, body, [class*="css"] {
     margin-top: 3px;
 }
 
-/* Preview Price Card */
+/* Selector / preview */
 .preview-box {
     background: #dafbe1;
     border: 1px solid #2ea84340;
@@ -62,7 +62,7 @@ html, body, [class*="css"] {
     font-size: 0.6rem;
     color: #1a7f37;
     text-transform: uppercase;
-    font-weight: bold;
+    font-weight: 700;
     line-height: 1;
     letter-spacing: 0.3px;
 }
@@ -149,6 +149,10 @@ html, body, [class*="css"] {
 }
 
 .checklist-item {
+    margin-bottom: 8px;
+}
+
+.checklist-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -156,12 +160,7 @@ html, body, [class*="css"] {
     padding: 7px 8px;
     border: 1px solid #eef1f4;
     border-radius: 10px;
-    margin-bottom: 8px;
     background: #fbfcfd;
-}
-
-.checklist-item:last-child {
-    margin-bottom: 0;
 }
 
 .checklist-name {
@@ -188,6 +187,21 @@ html, body, [class*="css"] {
     color: #cf222e;
 }
 
+.progress-track {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    background: #eaeef2;
+    overflow: hidden;
+    margin-top: 7px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: #2ea843;
+}
+
 /* Botones */
 div[data-testid="stButton"] > button {
     border-radius: 10px !important;
@@ -205,7 +219,7 @@ div[data-baseweb="select"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-# ── Data Loading ──────────────────────────────────────────────────────────────
+# ── Data Loading ─────────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
 def load_data_auto():
     sheet_id = "1qWaXRLZtPQ4lX9Nvmkky_IJLaxLGDBTudTKrxAPU6Ak"
@@ -254,9 +268,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Selector Horizontal ──────────────────────────────────────────────────────
-if not df.empty:
-    cats_list = sorted(df["Categoría"].dropna().unique().tolist())
+cats_list = sorted(df["Categoría"].dropna().unique().tolist()) if not df.empty and "Categoría" in df.columns else []
 
+if not df.empty and cats_list:
     c1, c2, c3, c4, c5 = st.columns([1.5, 2.5, 1.5, 1.2, 2.5])
 
     with c1:
@@ -264,18 +278,19 @@ if not df.empty:
 
     mask_cat = df[df["Categoría"] == cat_sel]
 
+    prods = sorted(mask_cat["Producto"].dropna().unique().tolist()) if not mask_cat.empty else []
     with c2:
-        prods = sorted(mask_cat["Producto"].dropna().unique().tolist())
-        prod_sel = st.selectbox("Producto", prods, label_visibility="collapsed")
+        prod_sel = st.selectbox("Producto", prods, label_visibility="collapsed") if prods else None
 
-    mask_prod = mask_cat[mask_cat["Producto"] == prod_sel]
+    mask_prod = mask_cat[mask_cat["Producto"] == prod_sel] if prod_sel is not None else pd.DataFrame()
 
+    provs = mask_prod["Proveedor"].dropna().unique().tolist() if not mask_prod.empty else []
     with c3:
-        provs = mask_prod["Proveedor"].dropna().unique().tolist()
-        prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed")
+        prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed") if provs else None
 
-    final_row = mask_prod[mask_prod["Proveedor"] == prov_sel].iloc[0]
-    precio_actual = int(final_row["Precio"])
+    final_row = mask_prod[mask_prod["Proveedor"] == prov_sel].iloc[0] if prov_sel is not None and not mask_prod.empty and not mask_prod[mask_prod["Proveedor"] == prov_sel].empty else None
+
+    precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
     with c4:
         st.markdown(f"""
@@ -289,7 +304,7 @@ if not df.empty:
         b1, b2, b3 = st.columns(3)
 
         with b1:
-            if st.button("➕ Añadir", use_container_width=True):
+            if st.button("➕ Añadir", use_container_width=True, disabled=final_row is None):
                 st.session_state.cotizacion.append({
                     "Categoría": final_row["Categoría"],
                     "Producto": final_row["Producto"],
@@ -299,8 +314,8 @@ if not df.empty:
                 st.rerun()
 
         with b2:
-            cheap = mask_cat.loc[mask_cat["Precio"].idxmin()]
-            if st.button("⬇️ Barato", use_container_width=True):
+            cheap = mask_cat.loc[mask_cat["Precio"].idxmin()] if not mask_cat.empty else None
+            if st.button("⬇️ Barato", use_container_width=True, disabled=cheap is None):
                 st.session_state.cotizacion.append({
                     "Categoría": cheap["Categoría"],
                     "Producto": cheap["Producto"],
@@ -310,8 +325,8 @@ if not df.empty:
                 st.rerun()
 
         with b3:
-            exp = mask_cat.loc[mask_cat["Precio"].idxmax()]
-            if st.button("⬆️ Caro", use_container_width=True):
+            exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
+            if st.button("⬆️ Caro", use_container_width=True, disabled=exp is None):
                 st.session_state.cotizacion.append({
                     "Categoría": exp["Categoría"],
                     "Producto": exp["Producto"],
@@ -319,6 +334,8 @@ if not df.empty:
                     "Precio": int(exp["Precio"])
                 })
                 st.rerun()
+else:
+    st.warning("No se pudieron cargar categorías desde la planilla.")
 
 # ── Detalle ──────────────────────────────────────────────────────────────────
 st.write("")
@@ -326,6 +343,9 @@ left, right = st.columns([3, 1.2], vertical_alignment="top")
 
 cot = st.session_state.cotizacion
 cats_en_cot = {item["Categoría"] for item in cot}
+completas = sum(1 for c in cats_list if c in cats_en_cot)
+total_cats = len(cats_list)
+progress = (completas / total_cats * 100) if total_cats else 0
 
 with left:
     st.markdown("<div class='detail-title'>Detalle de cotización</div>", unsafe_allow_html=True)
@@ -391,7 +411,7 @@ with right:
     st.markdown('<div class="checklist-card">', unsafe_allow_html=True)
     st.markdown(f"""
         <div class="checklist-title">Estado por categoría</div>
-        <div class="checklist-summary">{len(cats_en_cot)}/{len(cats_list)} completas</div>
+        <div class="checklist-summary">{completas}/{total_cats} completas</div>
     """, unsafe_allow_html=True)
 
     if not cats_list:
@@ -402,11 +422,17 @@ with right:
             icon = "✓" if en_lista else "✕"
             status_class = "ok" if en_lista else "no"
             label = "Incluida" if en_lista else "Pendiente"
+            pct = 100 if en_lista else 0
 
             st.markdown(f"""
             <div class="checklist-item">
-                <div class="checklist-name">{c}</div>
-                <div class="check-status {status_class}">{icon} {label}</div>
+                <div class="checklist-row">
+                    <div class="checklist-name">{c}</div>
+                    <div class="check-status {status_class}">{icon} {label}</div>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:{pct}%;"></div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 

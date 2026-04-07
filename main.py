@@ -53,9 +53,18 @@ html, body, [class*="css"] {
     border-radius: 10px;
     padding: 7px 12px;
     text-align: center;
-    min-height: 58px;
+    height: 58px; /* Altura fija para coincidir con botones */
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* Forzar altura de botones en la fila del selector para igualar la vista previa */
+div[data-testid="column"] button {
+    height: 58px !important;
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
@@ -85,6 +94,12 @@ html, body, [class*="css"] {
     margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    height: 18px; /* Altura fija para facilitar alineación */
+}
+
+/* Alineación del Total Neto con el primer elemento */
+.total-container-offset {
+    margin-top: 28px; /* Altura del título (18px) + su margen inferior (10px) */
 }
 
 .detail-row-wrap {
@@ -107,8 +122,6 @@ html, body, [class*="css"] {
     gap: 10px;
     font-size: 0.9rem;
     width: 100%;
-    min-height: 54px;
-    flex-wrap: wrap;
 }
 
 .price-tag {
@@ -180,13 +193,8 @@ html, body, [class*="css"] {
     white-space: nowrap;
 }
 
-.ok {
-    color: #1a7f37;
-}
-
-.no {
-    color: #cf222e;
-}
+.ok { color: #1a7f37; }
+.no { color: #cf222e; }
 
 .progress-track {
     width: 100%;
@@ -203,7 +211,7 @@ html, body, [class*="css"] {
     background: #2ea843;
 }
 
-/* Botones */
+/* Botones generales */
 div[data-testid="stButton"] > button {
     border-radius: 10px !important;
 }
@@ -211,11 +219,6 @@ div[data-testid="stButton"] > button {
 /* Ajustes de columnas */
 div[data-testid="column"] div[data-testid="stVerticalBlock"] {
     gap: 0rem !important;
-}
-
-/* Inputs más compactos */
-div[data-baseweb="select"] > div {
-    min-height: 40px;
 }
 </style>
 """), unsafe_allow_html=True)
@@ -278,14 +281,14 @@ if not df.empty and cats_list:
         cat_sel = st.selectbox("Categoría", cats_list, label_visibility="collapsed")
 
     mask_cat = df[df["Categoría"] == cat_sel]
-
     prods = sorted(mask_cat["Producto"].dropna().unique().tolist()) if not mask_cat.empty else []
+    
     with c2:
         prod_sel = st.selectbox("Producto", prods, label_visibility="collapsed") if prods else None
 
     mask_prod = mask_cat[mask_cat["Producto"] == prod_sel] if prod_sel is not None else pd.DataFrame()
-
     provs = mask_prod["Proveedor"].dropna().unique().tolist() if not mask_prod.empty else []
+    
     with c3:
         prov_sel = st.selectbox("Proveedor", provs, label_visibility="collapsed") if provs else None
 
@@ -307,9 +310,8 @@ if not df.empty and cats_list:
 
     with c5:
         b1, b2, b3 = st.columns(3)
-
         with b1:
-            if st.button("➕", use_container_width=True, disabled=final_row is None):
+            if st.button("➕", key="btn_add", use_container_width=True, disabled=final_row is None):
                 st.session_state.cotizacion.append({
                     "Categoría": final_row["Categoría"],
                     "Producto": final_row["Producto"],
@@ -320,7 +322,7 @@ if not df.empty and cats_list:
 
         with b2:
             cheap = mask_cat.loc[mask_cat["Precio"].idxmin()] if not mask_cat.empty else None
-            if st.button("💲", use_container_width=True, disabled=cheap is None):
+            if st.button("💲", key="btn_min", use_container_width=True, disabled=cheap is None):
                 st.session_state.cotizacion.append({
                     "Categoría": cheap["Categoría"],
                     "Producto": cheap["Producto"],
@@ -331,7 +333,7 @@ if not df.empty and cats_list:
 
         with b3:
             exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
-            if st.button("💲💲💲", use_container_width=True, disabled=exp is None):
+            if st.button("💲💲💲", key="btn_max", use_container_width=True, disabled=exp is None):
                 st.session_state.cotizacion.append({
                     "Categoría": exp["Categoría"],
                     "Producto": exp["Producto"],
@@ -382,11 +384,14 @@ with left:
 with right:
     total = sum(i["Precio"] for i in cot)
 
+    # El contenedor del total ahora incluye la clase 'total-container-offset'
     st.markdown(dedent(f"""
-    <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:14px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Total neto</div>
-        <div style="font-size:2.2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin:10px 0;">{fmt(total)}</div>
-        <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
+    <div class="total-container-offset">
+        <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:14px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Total neto</div>
+            <div style="font-size:2.2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin:10px 0;">{fmt(total)}</div>
+            <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
+        </div>
     </div>
     """), unsafe_allow_html=True)
 
@@ -412,7 +417,7 @@ with right:
         st.session_state.cotizacion = []
         st.rerun()
 
-    # ── Ajuste para evitar el error del </div> literal ──
+    # ── Checklist ──
     checklist_rows = []
     for c in cats_list:
         en_lista = c in cats_en_cot
@@ -421,7 +426,6 @@ with right:
         label = "Incluida" if en_lista else "Pendiente"
         pct = 100 if en_lista else 0
 
-        # Importante: el .strip() elimina espacios en blanco que Markdown confunde con código
         item_html = dedent(f"""
             <div class="checklist-item">
                 <div class="checklist-row">
@@ -435,7 +439,6 @@ with right:
         """).strip()
         checklist_rows.append(item_html)
 
-    # Pegamos la unión de filas directamente al margen izquierdo del f-string
     checklist_html = dedent(f"""
     <div class="checklist-card">
         <div class="checklist-title">Estado por categoría</div>

@@ -320,7 +320,7 @@ if not df.empty and cats_list:
 
         with b2:
             cheap = mask_cat.loc[mask_cat["Precio"].idxmin()] if not mask_cat.empty else None
-            if st.button("⬇️💲", use_container_width=True, disabled=cheap is None):
+            if st.button("💲", use_container_width=True, disabled=cheap is None):
                 st.session_state.cotizacion.append({
                     "Categoría": cheap["Categoría"],
                     "Producto": cheap["Producto"],
@@ -331,7 +331,7 @@ if not df.empty and cats_list:
 
         with b3:
             exp = mask_cat.loc[mask_cat["Precio"].idxmax()] if not mask_cat.empty else None
-            if st.button("⬆️💲", use_container_width=True, disabled=exp is None):
+            if st.button("💲💲💲", use_container_width=True, disabled=exp is None):
                 st.session_state.cotizacion.append({
                     "Categoría": exp["Categoría"],
                     "Producto": exp["Producto"],

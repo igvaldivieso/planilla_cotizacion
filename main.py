@@ -51,6 +51,7 @@ html, body, [class*="css"] {
     transition: color 0.2s;
     border-bottom: 1px solid #d0d7de;
     padding-bottom: 1px;
+    font-weight: 500;
 }
 
 .app-subtitle a:hover {
@@ -214,6 +215,7 @@ def load_data_auto():
 
 df = load_data_auto()
 
+# Inicialización de estados
 if "cotizacion" not in st.session_state:
     st.session_state.cotizacion = []
 
@@ -238,7 +240,7 @@ st.markdown(dedent(f"""
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
     <div class="app-subtitle">
         <a href="{SHEET_URL}" target="_blank">
-            Acceder a planilla (Google Sheets) ↗
+            Ver base de datos original en Google Sheets ↗
         </a>
     </div>
 </div>
@@ -274,8 +276,8 @@ if not df.empty and cats_list:
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
     with c4:
-        # Reemplazo de Preview-box por Selectbox nativo igual a los anteriores
-        st.selectbox("Precio", [fmt(precio_actual)], label_visibility="collapsed", disabled=True)
+        # Selector nativo de precio (solo visualización/deshabilitado)
+        st.selectbox("Precio", [fmt(precio_actual)], label_visibility="collapsed", disabled=True, key="price_preview_select")
 
     with c5:
         b1, b2, b3 = st.columns(3)
@@ -362,20 +364,33 @@ with right:
 
     st.write("")
 
+    # --- Lógica de nombre de archivo corregida ---
     today_str = datetime.now().strftime("%d-%m-%Y")
     default_name = f"cotización_rizotron_{today_str}"
-    custom_name = st.text_input("Nombre del archivo", placeholder=default_name, label_visibility="collapsed")
-    final_filename = f"{custom_name.strip() if custom_name.strip() else default_name}.xlsx"
+    
+    # Usamos un key para que Streamlit mantenga el estado y actualice la variable al cambiar
+    name_input = st.text_input(
+        "Nombre del archivo", 
+        value=st.session_state.get("file_name_val", default_name),
+        placeholder="Escribe el nombre...", 
+        label_visibility="collapsed",
+        key="file_name_val"
+    )
+    
+    # Aseguramos que siempre tenga extensión .xlsx
+    final_filename = f"{name_input.strip() if name_input.strip() else default_name}.xlsx"
 
     if cot:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
+        
         st.download_button(
             "📊 Descargar Excel",
             data=output.getvalue(),
             file_name=final_filename,
-            use_container_width=True
+            use_container_width=True,
+            key="dl_btn" # Key para forzar re-renderizado si cambia algo
         )
 
     if st.button("🗑️ Vaciar lista", use_container_width=True):

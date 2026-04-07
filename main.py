@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import io
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -9,7 +10,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Custom CSS ───────────────────────────────────────────────────────────────
+# ── Custom CSS (Ultra-Refined) ───────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;800&display=swap');
@@ -38,65 +39,78 @@ html, body, [class*="css"] { font-family: 'Syne', sans-serif; font-size: 13px; }
 .preview-label { font-size: 0.6rem; color: #1a7f37; text-transform: uppercase; font-weight: bold; }
 .preview-value { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #116329; }
 
-/* Item Row */
+/* Item Row - Tarjeta Principal */
 .sel-item {
     background: #ffffff;
     border: 1px solid #d0d7de;
     border-left: 4px solid #2ea843;
     border-radius: 6px;
-    padding: 10px 15px;
+    padding: 12px 18px;
     display: flex; align-items: center;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     width: 100%;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    min-height: 52px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.price-tag { font-family: 'DM Mono', monospace; font-weight: 700; color: #1a7f37; }
+.price-tag { font-family: 'DM Mono', monospace; font-weight: 700; color: #1a7f37; font-size: 1.1rem; }
 
-/* Contenedor de botones de movimiento */
-.move-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    height: 100%;
+/* --- FIX DE MOVIMIENTO (FLECHAS PEQUEÑAS Y UNIDAS) --- */
+/* Eliminamos el gap de Streamlit en la columna de movimiento */
+[data-testid="column"]:first-child div[data-testid="stVerticalBlock"] {
+    gap: 0rem !important;
 }
 
-/* Estilización de los botones de flecha de Streamlit */
-div.stButton > button:has(div:contains("v")), 
-div.stButton > button:has(div:contains("^")) {
-    padding: 0px !important;
-    width: 28px !important;
-    height: 20px !important;
-    min-height: 20px !important;
-    background-color: transparent !important;
+/* Estilizamos los botones de flecha ▲ ▼ */
+div.stButton > button:has(div:contains("▲")), 
+div.stButton > button:has(div:contains("▼")) {
+    width: 32px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    background: #ffffff !important;
     border: 1px solid #d0d7de !important;
     color: #57606a !important;
-    line-height: 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
     font-size: 10px !important;
+    transition: all 0.2s;
 }
 
-div.stButton > button:hover {
+/* Unimos visualmente los botones */
+div.stButton > button:has(div:contains("▲")) {
+    border-radius: 6px 6px 0 0 !important;
+}
+div.stButton > button:has(div:contains("▼")) {
+    border-radius: 0 0 6px 6px !important;
+    border-top: none !important;
+}
+
+div.stButton > button:has(div:contains("▲")):hover, 
+div.stButton > button:has(div:contains("▼")):hover {
+    background: #f0fff4 !important;
+    color: #1a7f37 !important;
     border-color: #2ea843 !important;
-    color: #2ea843 !important;
-    background-color: #f0fff4 !important;
+    z-index: 10;
 }
 
-/* Botón Eliminar (X) */
-.del-btn button {
-    border: none !important;
-    color: #cf222e !important;
+/* Botón Eliminar (X) más elegante */
+div.stButton > button:has(div:contains("✕")) {
     background: transparent !important;
+    border: 1px solid #d0d7de !important;
+    color: #cf222e !important;
+    border-radius: 6px !important;
+    width: 32px !important;
+    height: 32px !important;
 }
-.del-btn button:hover {
+div.stButton > button:has(div:contains("✕")):hover {
     background: #ffebe9 !important;
+    border-color: #cf222e !important;
 }
 
 .block-container { padding-top: 1rem; padding-bottom: 1rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Data Loading & Cleaning ──────────────────────────────────────────────────
+# ── Data Loading ──────────────────────────────────────────────────────────────
 @st.cache_data(ttl=30)
 def load_data_auto():
     sheet_id = "1qWaXRLZtPQ4lX9Nvmkky_IJLaxLGDBTudTKrxAPU6Ak"
@@ -118,7 +132,7 @@ if "cotizacion" not in st.session_state:
 def fmt(price: int) -> str:
     return f"${price:,.0f}".replace(",", ".")
 
-# ── Funciones de Movimiento ──────────────────────────────────────────────────
+# ── Movimiento ────────────────────────────────────────────────────────────────
 def move_item(index, direction):
     new_index = index + direction
     if 0 <= new_index < len(st.session_state.cotizacion):
@@ -133,7 +147,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Fila de Selección Horizontal ──────────────────────────────────────────────
+# ── Selector Horizontal ───────────────────────────────────────────────────────
 if not df.empty:
     c1, c2, c3, c4, c5 = st.columns([1.5, 2.5, 1.5, 1.2, 2.5])
     
@@ -159,7 +173,7 @@ if not df.empty:
     with c4:
         st.markdown(f"""
         <div class="preview-box">
-            <div class="preview-label">PRECIO VISTA PREVIA</div>
+            <div class="preview-label">VISTA PREVIA</div>
             <div class="preview-value">{fmt(precio_actual)}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -187,45 +201,44 @@ if not df.empty:
                     "Proveedor": exp["Proveedor"], "Precio": int(exp["Precio"])
                 })
 
-# ── Detalle con Ordenamiento ──────────────────────────────────────────────────
+# ── Detalle ───────────────────────────────────────────────────────────────────
 st.write("")
 left, right = st.columns([3, 1.2])
 
 with left:
-    st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:#57606a; margin-bottom:10px;'>DETALLE DE COTIZACIÓN</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:#57606a; margin-bottom:12px;'>DETALLE DE COTIZACIÓN</div>", unsafe_allow_html=True)
     cot = st.session_state.cotizacion
     
     if not cot:
         st.info("La lista está vacía.")
     else:
         for idx, item in enumerate(cot):
-            # Layout de fila: [Controles de Movimiento, Tarjeta Info, Eliminar]
-            col_move, col_info, col_del = st.columns([0.25, 10, 0.4])
+            # Layout: [Control Mover, Tarjeta, Borrar]
+            col_move, col_info, col_del = st.columns([0.2, 10, 0.4])
             
             with col_move:
-                # Contenedor vertical para las flechas
-                st.write('<div class="move-controls">', unsafe_allow_html=True)
-                if st.button("^", key=f"up_{idx}", help="Subir"):
+                # Botones ▲ ▼ pegados sin gap
+                if st.button("▲", key=f"up_{idx}"):
                     move_item(idx, -1)
                     st.rerun()
-                if st.button("v", key=f"down_{idx}", help="Bajar"):
+                if st.button("▼", key=f"down_{idx}"):
                     move_item(idx, 1)
                     st.rerun()
-                st.write('</div>', unsafe_allow_html=True)
 
             with col_info:
                 st.markdown(f"""
                 <div class="sel-item">
-                    <span style="flex:1.2; font-weight:bold; color:#1a7f37;">{item['Categoría']}</span>
-                    <span style="flex:2.5;">{item['Producto']}</span>
-                    <span style="flex:1.2; color:#57606a; font-size:0.75rem;">{item['Proveedor']}</span>
-                    <span class="price-tag" style="flex:1; text-align:right;">{fmt(item['Precio'])}</span>
+                    <span style="flex:1.2; font-weight:800; color:#1a7f37;">{item['Categoría']}</span>
+                    <span style="flex:3;">{item['Producto']}</span>
+                    <span style="flex:1.5; color:#57606a; font-size:0.8rem; text-align:center;">{item['Proveedor']}</span>
+                    <span class="price-tag" style="flex:1.2; text-align:right;">{fmt(item['Precio'])}</span>
                 </div>
                 """, unsafe_allow_html=True)
             
             with col_del:
-                st.write('<div class="del-btn">', unsafe_allow_html=True)
-                if st.button("✕", key=f"del_{idx}", help="Eliminar"):
+                # X para borrar centrada verticalmente
+                st.write('<div style="padding-top:10px;">', unsafe_allow_html=True)
+                if st.button("✕", key=f"del_{idx}"):
                     st.session_state.cotizacion.pop(idx)
                     st.rerun()
                 st.write('</div>', unsafe_allow_html=True)
@@ -233,9 +246,10 @@ with left:
 with right:
     total = sum(i["Precio"] for i in cot)
     st.markdown(f"""
-    <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:10px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px;">PRESUPUESTO TOTAL</div>
-        <div style="font-size:2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin-top:5px;">{fmt(total)}</div>
+    <div style="background:#ffffff; border:1px solid #d0d7de; padding:20px; border-radius:12px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="font-size:0.7rem; color:#57606a; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">TOTAL NETO</div>
+        <div style="font-size:2.2rem; font-weight:800; color:#1a7f37; font-family:DM Mono; margin:10px 0;">{fmt(total)}</div>
+        <div style="font-size:0.8rem; color:#8b949e; border-top:1px solid #f6f8fa; padding-top:10px;">{len(cot)} componentes</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -243,3 +257,10 @@ with right:
     if st.button("🗑️ Vaciar Lista", use_container_width=True):
         st.session_state.cotizacion = []
         st.rerun()
+        
+    if cot:
+        # Buffer para exportar a Excel
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            pd.DataFrame(cot).to_excel(writer, index=False)
+        st.download_button("📊 Descargar Excel (.xlsx)", data=output.getvalue(), file_name="cotizacion.xlsx", use_container_width=True)

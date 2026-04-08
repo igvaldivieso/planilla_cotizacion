@@ -3,6 +3,7 @@ import pandas as pd
 import io
 from datetime import datetime
 from textwrap import dedent
+from fpdf import FPDF
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -234,7 +235,20 @@ def delete_item(index):
     if 0 <= index < len(cot):
         cot.pop(index)
 
-# ── Header ───────────────────────────────────────────────────────────────────
+# ── Clase PDF Personalizada ──────────────────────────────────────────────────
+class PDF(FPDF):
+    def header(self):
+        self.set_font("Helvetica", "B", 16)
+        self.set_text_color(26, 127, 55)
+        self.cell(0, 10, "Cotización FIA RAIZ 4.0", ln=True, align="C")
+        self.ln(5)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("Helvetica", "I", 8)
+        self.cell(0, 10, f"Página {self.page_no()}", align="C")
+
+# ── Header UI ────────────────────────────────────────────────────────────────
 st.markdown(dedent(f"""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
@@ -276,7 +290,6 @@ if not df.empty and cats_list:
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
     with c4:
-        # Selector nativo de precio (solo visualización/deshabilitado)
         st.selectbox("Precio", [fmt(precio_actual)], label_visibility="collapsed", disabled=True, key="price_preview_select")
 
     with c5:
@@ -364,11 +377,9 @@ with right:
 
     st.write("")
 
-    # --- Lógica de nombre de archivo corregida ---
     today_str = datetime.now().strftime("%d-%m-%Y")
     default_name = f"cotización_rizotron_{today_str}"
     
-    # Usamos un key para que Streamlit mantenga el estado y actualice la variable al cambiar
     name_input = st.text_input(
         "Nombre del archivo", 
         value=st.session_state.get("file_name_val", default_name),
@@ -377,20 +388,62 @@ with right:
         key="file_name_val"
     )
     
-    # Aseguramos que siempre tenga extensión .xlsx
     final_filename = f"{name_input.strip() if name_input.strip() else default_name}.xlsx"
 
+    # --- Descargas ---
     if cot:
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        # Excel
+        output_xlsx = io.BytesIO()
+        with pd.ExcelWriter(output_xlsx, engine="openpyxl") as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
         
         st.download_button(
             "📊 Descargar Excel",
-            data=output.getvalue(),
+            data=output_xlsx.getvalue(),
             file_name=final_filename,
             use_container_width=True,
-            key="dl_btn" # Key para forzar re-renderizado si cambia algo
+            key="dl_btn"
+        )
+
+        # PDF
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_font("Helvetica", size=10)
+        pdf.set_text_color(87, 96, 106)
+        pdf.cell(0, 10, f"Fecha: {today_str}", ln=True)
+        pdf.cell(0, 10, f"Proyecto: {name_input}", ln=True)
+        pdf.ln(5)
+
+        # Tabla Encabezados
+        pdf.set_fill_color(246, 248, 250)
+        pdf.set_text_color(0)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(40, 10, "Categoría", 1, 0, "C", True)
+        pdf.cell(80, 10, "Producto", 1, 0, "C", True)
+        pdf.cell(40, 10, "Proveedor", 1, 0, "C", True)
+        pdf.cell(30, 10, "Precio", 1, 1, "C", True)
+
+        # Filas
+        pdf.set_font("Helvetica", size=9)
+        for item in cot:
+            pdf.cell(40, 8, str(item["Categoría"]), 1)
+            pdf.cell(80, 8, str(item["Producto"]), 1)
+            pdf.cell(40, 8, str(item["Proveedor"]), 1)
+            pdf.cell(30, 8, fmt(item["Precio"]), 1, 1, "R")
+
+        pdf.ln(5)
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_text_color(26, 127, 55)
+        pdf.cell(160, 10, "TOTAL NETO:", 0, 0, "R")
+        pdf.cell(30, 10, fmt(total), 0, 1, "R")
+
+        st.download_button(
+            "📄 Descargar PDF",
+            data=bytes(pdf.output()),
+            file_name=final_filename.replace(".xlsx", ".pdf"),
+            mime="application/pdf",
+            use_container_width=True,
+            key="pdf_btn"
         )
 
     if st.button("🗑️ Vaciar lista", use_container_width=True):
@@ -406,7 +459,7 @@ with right:
         label = "Incluida" if en_lista else "Pendiente"
         pct = 100 if en_lista else 0
 
-        item_html = dedent(f"""
+        item_html = f"""
             <div class="checklist-item">
                 <div class="checklist-row">
                     <div class="checklist-name">{c}</div>
@@ -416,7 +469,7 @@ with right:
                     <div class="progress-fill" style="width:{pct}%;"></div>
                 </div>
             </div>
-        """).strip()
+        """
         checklist_rows.append(item_html)
 
     checklist_html = dedent(f"""

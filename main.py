@@ -3,7 +3,7 @@ import pandas as pd
 import io
 from datetime import datetime
 from textwrap import dedent
-from fpdf import FPDF
+from fpdf import FPDF  # Importación para el PDF
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -235,20 +235,7 @@ def delete_item(index):
     if 0 <= index < len(cot):
         cot.pop(index)
 
-# ── Clase PDF Personalizada ──────────────────────────────────────────────────
-class PDF(FPDF):
-    def header(self):
-        self.set_font("Helvetica", "B", 16)
-        self.set_text_color(26, 127, 55)
-        self.cell(0, 10, "Cotización FIA RAIZ 4.0", ln=True, align="C")
-        self.ln(5)
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font("Helvetica", "I", 8)
-        self.cell(0, 10, f"Página {self.page_no()}", align="C")
-
-# ── Header UI ────────────────────────────────────────────────────────────────
+# ── Header ───────────────────────────────────────────────────────────────────
 st.markdown(dedent(f"""
 <div class="app-header">
     <div class="app-title">🌱 Cotizador FIA RAIZ 4.0</div>
@@ -388,11 +375,10 @@ with right:
         key="file_name_val"
     )
     
-    final_filename = f"{name_input.strip() if name_input.strip() else default_name}.xlsx"
+    final_filename = f"{name_input.strip() if name_input.strip() else default_name}"
 
-    # --- Descargas ---
     if cot:
-        # Excel
+        # EXCEL
         output_xlsx = io.BytesIO()
         with pd.ExcelWriter(output_xlsx, engine="openpyxl") as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
@@ -400,50 +386,45 @@ with right:
         st.download_button(
             "📊 Descargar Excel",
             data=output_xlsx.getvalue(),
-            file_name=final_filename,
+            file_name=f"{final_filename}.xlsx",
             use_container_width=True,
-            key="dl_btn"
+            key="dl_btn_xlsx"
         )
 
-        # PDF
-        pdf = PDF()
+        # PDF - Nueva funcionalidad añadida
+        pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Helvetica", size=10)
-        pdf.set_text_color(87, 96, 106)
-        pdf.cell(0, 10, f"Fecha: {today_str}", ln=True)
-        pdf.cell(0, 10, f"Proyecto: {name_input}", ln=True)
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, "Cotización FIA RAIZ 4.0", ln=True, align="C")
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(0, 10, f"Fecha: {today_str}", ln=True, align="R")
         pdf.ln(5)
-
-        # Tabla Encabezados
-        pdf.set_fill_color(246, 248, 250)
-        pdf.set_text_color(0)
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(40, 10, "Categoría", 1, 0, "C", True)
-        pdf.cell(80, 10, "Producto", 1, 0, "C", True)
-        pdf.cell(40, 10, "Proveedor", 1, 0, "C", True)
-        pdf.cell(30, 10, "Precio", 1, 1, "C", True)
-
-        # Filas
-        pdf.set_font("Helvetica", size=9)
+        
+        # Tabla simple
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(40, 8, "Categoría", 1)
+        pdf.cell(80, 8, "Producto", 1)
+        pdf.cell(35, 8, "Proveedor", 1)
+        pdf.cell(35, 8, "Precio", 1, ln=True)
+        
+        pdf.set_font("Arial", "", 9)
         for item in cot:
             pdf.cell(40, 8, str(item["Categoría"]), 1)
             pdf.cell(80, 8, str(item["Producto"]), 1)
-            pdf.cell(40, 8, str(item["Proveedor"]), 1)
-            pdf.cell(30, 8, fmt(item["Precio"]), 1, 1, "R")
-
+            pdf.cell(35, 8, str(item["Proveedor"]), 1)
+            pdf.cell(35, 8, fmt(item["Precio"]), 1, ln=True)
+        
         pdf.ln(5)
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.set_text_color(26, 127, 55)
-        pdf.cell(160, 10, "TOTAL NETO:", 0, 0, "R")
-        pdf.cell(30, 10, fmt(total), 0, 1, "R")
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(155, 10, "TOTAL NETO:", 0, 0, "R")
+        pdf.cell(35, 10, fmt(total), 0, 1, "L")
 
         st.download_button(
             "📄 Descargar PDF",
-            data=bytes(pdf.output()),
-            file_name=final_filename.replace(".xlsx", ".pdf"),
-            mime="application/pdf",
+            data=pdf.output(dest='S').encode('latin-1', 'replace'),
+            file_name=f"{final_filename}.pdf",
             use_container_width=True,
-            key="pdf_btn"
+            key="dl_btn_pdf"
         )
 
     if st.button("🗑️ Vaciar lista", use_container_width=True):
@@ -459,7 +440,7 @@ with right:
         label = "Incluida" if en_lista else "Pendiente"
         pct = 100 if en_lista else 0
 
-        item_html = f"""
+        item_html = dedent(f"""
             <div class="checklist-item">
                 <div class="checklist-row">
                     <div class="checklist-name">{c}</div>
@@ -469,7 +450,7 @@ with right:
                     <div class="progress-fill" style="width:{pct}%;"></div>
                 </div>
             </div>
-        """
+        """).strip()
         checklist_rows.append(item_html)
 
     checklist_html = dedent(f"""

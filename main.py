@@ -3,8 +3,6 @@ import pandas as pd
 import io
 from datetime import datetime
 from textwrap import dedent
-from fpdf import FPDF
-from fpdf.enums import XPos, YPos
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -278,6 +276,7 @@ if not df.empty and cats_list:
     precio_actual = int(final_row["Precio"]) if final_row is not None else 0
 
     with c4:
+        # Selector nativo de precio (solo visualización/deshabilitado)
         st.selectbox("Precio", [fmt(precio_actual)], label_visibility="collapsed", disabled=True, key="price_preview_select")
 
     with c5:
@@ -365,9 +364,11 @@ with right:
 
     st.write("")
 
+    # --- Lógica de nombre de archivo corregida ---
     today_str = datetime.now().strftime("%d-%m-%Y")
     default_name = f"cotización_rizotron_{today_str}"
     
+    # Usamos un key para que Streamlit mantenga el estado y actualice la variable al cambiar
     name_input = st.text_input(
         "Nombre del archivo", 
         value=st.session_state.get("file_name_val", default_name),
@@ -376,60 +377,20 @@ with right:
         key="file_name_val"
     )
     
-    final_filename = f"{name_input.strip() if name_input.strip() else default_name}"
+    # Aseguramos que siempre tenga extensión .xlsx
+    final_filename = f"{name_input.strip() if name_input.strip() else default_name}.xlsx"
 
     if cot:
-        # EXCEL
-        output_xlsx = io.BytesIO()
-        with pd.ExcelWriter(output_xlsx, engine="openpyxl") as writer:
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
             pd.DataFrame(cot).to_excel(writer, index=False)
         
         st.download_button(
             "📊 Descargar Excel",
-            data=output_xlsx.getvalue(),
-            file_name=f"{final_filename}.xlsx",
+            data=output.getvalue(),
+            file_name=final_filename,
             use_container_width=True,
-            key="dl_btn_xlsx"
-        )
-
-        # PDF - Implementación corregida para fpdf2
-        pdf = FPDF()
-        pdf.add_page()
-        
-        pdf.set_font("helvetica", "B", 16)
-        pdf.cell(0, 10, "Cotización FIA RAIZ 4.0", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
-        
-        pdf.set_font("helvetica", "", 10)
-        pdf.cell(0, 10, f"Fecha: {today_str}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
-        pdf.ln(5)
-        
-        # Tabla de productos
-        pdf.set_font("helvetica", "B", 10)
-        pdf.cell(40, 8, "Categoría", 1)
-        pdf.cell(80, 8, "Producto", 1)
-        pdf.cell(35, 8, "Proveedor", 1)
-        pdf.cell(35, 8, "Precio", 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        
-        pdf.set_font("helvetica", "", 9)
-        for item in cot:
-            pdf.cell(40, 8, str(item["Categoría"]), 1)
-            pdf.cell(80, 8, str(item["Producto"]), 1)
-            pdf.cell(35, 8, str(item["Proveedor"]), 1)
-            pdf.cell(35, 8, fmt(item["Precio"]), 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        
-        pdf.ln(5)
-        pdf.set_font("helvetica", "B", 12)
-        pdf.cell(155, 10, "TOTAL NETO:", 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align="R")
-        pdf.cell(35, 10, fmt(total), 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
-
-        pdf_bytes = pdf.output()
-
-        st.download_button(
-            "📄 Descargar PDF",
-            data=pdf_bytes,
-            file_name=f"{final_filename}.pdf",
-            use_container_width=True,
-            key="dl_btn_pdf"
+            key="dl_btn" # Key para forzar re-renderizado si cambia algo
         )
 
     if st.button("🗑️ Vaciar lista", use_container_width=True):

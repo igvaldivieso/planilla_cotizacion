@@ -3,7 +3,8 @@ import pandas as pd
 import io
 from datetime import datetime
 from textwrap import dedent
-from fpdf import FPDF  # Importación para el PDF
+from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -391,37 +392,41 @@ with right:
             key="dl_btn_xlsx"
         )
 
-        # PDF - Nueva funcionalidad añadida
+        # PDF - Implementación corregida para fpdf2
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 16)
-        pdf.cell(0, 10, "Cotización FIA RAIZ 4.0", ln=True, align="C")
-        pdf.set_font("Arial", "", 10)
-        pdf.cell(0, 10, f"Fecha: {today_str}", ln=True, align="R")
+        
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(0, 10, "Cotización FIA RAIZ 4.0", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+        
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(0, 10, f"Fecha: {today_str}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
         pdf.ln(5)
         
-        # Tabla simple
-        pdf.set_font("Arial", "B", 10)
+        # Tabla de productos
+        pdf.set_font("helvetica", "B", 10)
         pdf.cell(40, 8, "Categoría", 1)
         pdf.cell(80, 8, "Producto", 1)
         pdf.cell(35, 8, "Proveedor", 1)
-        pdf.cell(35, 8, "Precio", 1, ln=True)
+        pdf.cell(35, 8, "Precio", 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
-        pdf.set_font("Arial", "", 9)
+        pdf.set_font("helvetica", "", 9)
         for item in cot:
             pdf.cell(40, 8, str(item["Categoría"]), 1)
             pdf.cell(80, 8, str(item["Producto"]), 1)
             pdf.cell(35, 8, str(item["Proveedor"]), 1)
-            pdf.cell(35, 8, fmt(item["Precio"]), 1, ln=True)
+            pdf.cell(35, 8, fmt(item["Precio"]), 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         pdf.ln(5)
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(155, 10, "TOTAL NETO:", 0, 0, "R")
-        pdf.cell(35, 10, fmt(total), 0, 1, "L")
+        pdf.set_font("helvetica", "B", 12)
+        pdf.cell(155, 10, "TOTAL NETO:", 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align="R")
+        pdf.cell(35, 10, fmt(total), 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
+
+        pdf_bytes = pdf.output()
 
         st.download_button(
             "📄 Descargar PDF",
-            data=pdf.output(dest='S').encode('latin-1', 'replace'),
+            data=pdf_bytes,
             file_name=f"{final_filename}.pdf",
             use_container_width=True,
             key="dl_btn_pdf"
